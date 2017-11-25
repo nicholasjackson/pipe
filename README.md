@@ -1,5 +1,6 @@
 # Nats.io message listener for [OpenFaaS](https://github.com/openfaas/faas)
 [![Docker Repository on Quay](https://quay.io/repository/nicholasjackson/faas-nats/status "Docker Repository on Quay")](https://quay.io/repository/nicholasjackson/faas-nats)
+[![CircleCI](https://circleci.com/gh/nicholasjackson/faas-nats.svg?style=svg)](https://circleci.com/gh/nicholasjackson/faas-nats)
 
 This project allows you to listen to Nats.io messages and call OpenFaas functions.  To allow the OpenFaaS function to stay agnostic to the caller it is also possible to register payload transformation templates between the message format and the OpenFaaS function payload.
 
