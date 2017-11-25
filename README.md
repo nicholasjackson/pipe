@@ -3,6 +3,8 @@
 
 This project allows you to listen to Nats.io messages and call OpenFaas functions.  To allow the OpenFaaS function to say agnostic to the caller it is also possible to register payload transformation templates between the message format and the OpenFaaS function payload.
 
+Because the implementation uses Nats.io Subscription queues it is possible to run more than one instance of this application for high availability without suffering duplicate messages.  The message will be delivered to a random instance of faas-nats.
+
 ## Configuration
 To configure which messages to listen to and functions to call a simple YAML configuration file is used...
 
@@ -10,8 +12,11 @@ To configure which messages to listen to and functions to call a simple YAML con
 nats: nats://192.168.1.113:4222
 gateway: http://192.168.1.113:8080
 functions:
+    # name of the subscription, does not need to correspond to function name
   - name: info
+    # function to call upon receipt of message
     function_name: info
+    # message to listen to
     message: example.info
  
   - name: echo
