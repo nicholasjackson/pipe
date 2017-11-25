@@ -1,0 +1,24 @@
+nats: nats://192.168.1.113:4222
+gateway: http://192.168.1.113:8080
+functions:
+  - name: info
+    function_name: info
+    message: example.info
+ 
+  - name: echo
+    # function to call when an event is received, by default it sends the message
+    # payload as received unless a input_template is used
+    function_name: echo
+    message: example.echo
+    # broadcast a message on success of the function, by default it sends the payload
+    # as received unless an output template is used
+    success_message: example.info.success
+    templates:
+      # Transform the raw message with a Go template, assumes the payload is json
+      input_template: |
+        {
+          "subject": "{{ .JSON.subject }}"
+        }
+      # Transform the raw message with a Go template, assumes the payload is json
+      output_template: |
+          {{printf "%s" .Raw}}
