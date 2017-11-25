@@ -79,3 +79,6 @@ docker run -it \
   quay.io/nicholasjackson/faas-nats:latest \
   -config /etc/faas-nats/example_config.yml
 ```
+
+## TODO
+[ ] Implement monitoring and metrics with Prometheus
