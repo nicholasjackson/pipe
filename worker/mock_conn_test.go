@@ -4,7 +4,7 @@
 package worker
 
 import (
-	"github.com/nats-io/nats"
+	"github.com/nats-io/go-nats-streaming"
 	"sync"
 )
 
@@ -22,7 +22,7 @@ var (
 //             PublishFunc: func(subj string, data []byte) error {
 // 	               panic("TODO: mock out the Publish method")
 //             },
-//             QueueSubscribeFunc: func(subj string, queue string, cb nats.MsgHandler) (*nats.Subscription, error) {
+//             QueueSubscribeFunc: func(subject string, qgroup string, cb stan.MsgHandler, opts ...stan.SubscriptionOption) (stan.Subscription, error) {
 // 	               panic("TODO: mock out the QueueSubscribe method")
 //             },
 //         }
@@ -36,7 +36,7 @@ type NatsConnectionMock struct {
 	PublishFunc func(subj string, data []byte) error
 
 	// QueueSubscribeFunc mocks the QueueSubscribe method.
-	QueueSubscribeFunc func(subj string, queue string, cb nats.MsgHandler) (*nats.Subscription, error)
+	QueueSubscribeFunc func(subject string, qgroup string, cb stan.MsgHandler, opts ...stan.SubscriptionOption) (stan.Subscription, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -49,12 +49,14 @@ type NatsConnectionMock struct {
 		}
 		// QueueSubscribe holds details about calls to the QueueSubscribe method.
 		QueueSubscribe []struct {
-			// Subj is the subj argument value.
-			Subj string
-			// Queue is the queue argument value.
-			Queue string
+			// Subject is the subject argument value.
+			Subject string
+			// Qgroup is the qgroup argument value.
+			Qgroup string
 			// Cb is the cb argument value.
-			Cb nats.MsgHandler
+			Cb stan.MsgHandler
+			// Opts is the opts argument value.
+			Opts []stan.SubscriptionOption
 		}
 	}
 }
@@ -95,37 +97,41 @@ func (mock *NatsConnectionMock) PublishCalls() []struct {
 }
 
 // QueueSubscribe calls QueueSubscribeFunc.
-func (mock *NatsConnectionMock) QueueSubscribe(subj string, queue string, cb nats.MsgHandler) (*nats.Subscription, error) {
+func (mock *NatsConnectionMock) QueueSubscribe(subject string, qgroup string, cb stan.MsgHandler, opts ...stan.SubscriptionOption) (stan.Subscription, error) {
 	if mock.QueueSubscribeFunc == nil {
 		panic("moq: NatsConnectionMock.QueueSubscribeFunc is nil but NatsConnection.QueueSubscribe was just called")
 	}
 	callInfo := struct {
-		Subj  string
-		Queue string
-		Cb    nats.MsgHandler
+		Subject string
+		Qgroup  string
+		Cb      stan.MsgHandler
+		Opts    []stan.SubscriptionOption
 	}{
-		Subj:  subj,
-		Queue: queue,
-		Cb:    cb,
+		Subject: subject,
+		Qgroup:  qgroup,
+		Cb:      cb,
+		Opts:    opts,
 	}
 	lockNatsConnectionMockQueueSubscribe.Lock()
 	mock.calls.QueueSubscribe = append(mock.calls.QueueSubscribe, callInfo)
 	lockNatsConnectionMockQueueSubscribe.Unlock()
-	return mock.QueueSubscribeFunc(subj, queue, cb)
+	return mock.QueueSubscribeFunc(subject, qgroup, cb, opts...)
 }
 
 // QueueSubscribeCalls gets all the calls that were made to QueueSubscribe.
 // Check the length with:
 //     len(mockedNatsConnection.QueueSubscribeCalls())
 func (mock *NatsConnectionMock) QueueSubscribeCalls() []struct {
-	Subj  string
-	Queue string
-	Cb    nats.MsgHandler
+	Subject string
+	Qgroup  string
+	Cb      stan.MsgHandler
+	Opts    []stan.SubscriptionOption
 } {
 	var calls []struct {
-		Subj  string
-		Queue string
-		Cb    nats.MsgHandler
+		Subject string
+		Qgroup  string
+		Cb      stan.MsgHandler
+		Opts    []stan.SubscriptionOption
 	}
 	lockNatsConnectionMockQueueSubscribe.RLock()
 	calls = mock.calls.QueueSubscribe

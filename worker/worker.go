@@ -3,7 +3,7 @@ package worker
 import (
 	"log"
 
-	"github.com/nats-io/nats"
+	stan "github.com/nats-io/go-nats-streaming"
 	"github.com/nicholasjackson/faas-nats/client"
 	"github.com/nicholasjackson/faas-nats/config"
 	"github.com/nicholasjackson/faas-nats/template"
@@ -13,7 +13,7 @@ import (
 type NatsWorker struct {
 	conn   NatsConnection
 	client client.Client
-	subs   []*nats.Subscription
+	subs   []*stan.Subscription
 	parser *template.Parser
 }
 
@@ -22,7 +22,7 @@ func NewNatsWorker(nc NatsConnection, c client.Client) *NatsWorker {
 	return &NatsWorker{
 		conn:   nc,
 		client: c,
-		subs:   make([]*nats.Subscription, 0),
+		subs:   make([]*stan.Subscription, 0),
 		parser: &template.Parser{},
 	}
 }
@@ -32,7 +32,7 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 	for _, f := range c.Functions {
 		log.Println("Registering event", f.Message)
 
-		s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *nats.Msg) {
+		s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *stan.Msg) {
 			log.Println("Handle event:", m.Subject)
 
 			functionData := m.Data
@@ -77,6 +77,6 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 			return
 		}
 
-		nw.subs = append(nw.subs, s)
+		nw.subs = append(nw.subs, &s)
 	}
 }

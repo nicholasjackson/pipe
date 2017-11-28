@@ -6,8 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
-	"github.com/nats-io/nats"
+	stan "github.com/nats-io/go-nats-streaming"
 	"github.com/nicholasjackson/faas-nats/client"
 	"github.com/nicholasjackson/faas-nats/config"
 	"github.com/nicholasjackson/faas-nats/worker"
@@ -15,7 +16,7 @@ import (
 )
 
 var configFile = flag.String("config", "", "configuration file continaing events to monitor")
-var nc *nats.Conn
+var nc stan.Conn
 
 func main() {
 	fmt.Println("Starting OpenFaaS Queue (NATS.io)")
@@ -36,7 +37,8 @@ func main() {
 
 	fmt.Printf("Loaded config: %#s\n", c)
 
-	nc, err = nats.Connect(c.Nats)
+	clientID := fmt.Sprintf("server-%d", time.Now().UnixNano())
+	nc, err = stan.Connect("faas-nats", clientID, stan.NatsURL(c.Nats))
 	if err != nil {
 		log.Fatal("Unable to connect to nats server")
 	}
@@ -51,7 +53,7 @@ func main() {
 }
 
 func healthCheck(rw http.ResponseWriter, r *http.Request) {
-	if !nc.IsConnected() {
+	if !nc.NatsConn().IsConnected() {
 		fmt.Sprint(rw, `{"nats": "not connected"}`)
 		rw.WriteHeader(http.StatusInternalServerError)
 	}

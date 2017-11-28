@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"github.com/nats-io/nats"
+	stan "github.com/nats-io/go-nats-streaming"
 	"github.com/nicholasjackson/faas-nats/client"
 	"github.com/nicholasjackson/faas-nats/config"
 )
@@ -14,8 +14,8 @@ var returnError error
 
 func setupWorkerTests(t *testing.T) (*is.I, *NatsWorker, *NatsConnectionMock, *client.ClientMock) {
 	mockedNatsConnection := &NatsConnectionMock{
-		QueueSubscribeFunc: func(subj string, queue string, cb nats.MsgHandler) (*nats.Subscription, error) {
-			return &nats.Subscription{}, nil
+		QueueSubscribeFunc: func(subject string, qgroup string, cb stan.MsgHandler, opts ...stan.SubscriptionOption) (stan.Subscription, error) {
+			return nil, nil
 		},
 		PublishFunc: func(subj string, data []byte) error {
 			return nil
@@ -66,9 +66,9 @@ func TestRegistersMessageListenerWithCorrectDetails(t *testing.T) {
 
 	nw.RegisterMessageListeners(c)
 
-	is.Equal(1, len(mc.QueueSubscribeCalls()))                  // expected 1 call to subscribe
-	is.Equal("queue.test1", mc.QueueSubscribeCalls()[0].Queue)  // expected queue to be set to correct value
-	is.Equal("tests.message", mc.QueueSubscribeCalls()[0].Subj) // expected subject to be set to correct value
+	is.Equal(1, len(mc.QueueSubscribeCalls()))                     // expected 1 call to subscribe
+	is.Equal("queue.test1", mc.QueueSubscribeCalls()[0].Qgroup)    // expected queue to be set to correct value
+	is.Equal("tests.message", mc.QueueSubscribeCalls()[0].Subject) // expected subject to be set to correct value
 }
 
 func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
@@ -85,7 +85,10 @@ func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
 
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
-	f(&nats.Msg{Data: []byte("data")}) // call the function
+
+	msg := stan.Msg{}
+	msg.Data = []byte("data")
+	f(&msg) // call the function
 
 	is.Equal(1, len(cl.CallFunctionCalls()))                    // expected 1 call to function
 	is.Equal("data", string(cl.CallFunctionCalls()[0].Payload)) // expected raw payload to be passed
@@ -108,7 +111,10 @@ func TestWorkerCallsFunctionTransformingMessage(t *testing.T) {
 
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
-	f(&nats.Msg{Data: []byte(`{ "name": "nic" }`)}) // call the function
+
+	msg := stan.Msg{}
+	msg.Data = []byte(`{ "name": "nic" }`)
+	f(&msg) // call the function
 
 	is.Equal(1, len(cl.CallFunctionCalls()))                                     // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(cl.CallFunctionCalls()[0].Payload)) // expected processed payload to be passed
@@ -129,7 +135,9 @@ func TestWorkerPublishesEventPostFunctionCall(t *testing.T) {
 
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
-	f(&nats.Msg{Data: nil}) // call the function
+
+	msg := stan.Msg{}
+	f(&msg) // call the function
 
 	is.Equal(1, len(mc.PublishCalls()))
 }
@@ -154,7 +162,9 @@ func TestWorkerPublishesEventPostFunctionCallTransformingPayload(t *testing.T) {
 
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
-	f(&nats.Msg{Data: nil}) // call the function
+
+	msg := stan.Msg{}
+	f(&msg) // call the function
 
 	is.Equal(`{ "nicsname": "nic" }`, string(mc.PublishCalls()[0].Data))
 }

@@ -1,16 +1,21 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"time"
 
 	"github.com/nats-io/nats"
 )
 
+var natsConnection = flag.String("nats", "nats://localhost:4222", "connection string for nats server")
+
 func main() {
+	flag.Parse()
+
 	eventName := "example.echo"
 
-	nc, err := nats.Connect("nats://192.168.1.113:4222")
+	nc, err := nats.Connect(*natsConnection)
 	if err != nil {
 		log.Fatal("Unable to connect to nats server")
 	}
