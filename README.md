@@ -1,5 +1,12 @@
-# OpenFaaS queue listener for Nats.io
-This project allows you to listen to Nats.io messages and call OpenFaas functions.  To allow the OpenFaaS function to say agnostic to the caller it is also possible to register payload transformation templates between the message format and the OpenFaaS function payload.
+# Nats.io message listener for [OpenFaaS](https://github.com/openfaas/faas)
+[![Docker Repository on Quay](https://quay.io/repository/nicholasjackson/faas-nats/status "Docker Repository on Quay")](https://quay.io/repository/nicholasjackson/faas-nats)
+[![CircleCI](https://circleci.com/gh/nicholasjackson/faas-nats.svg?style=svg)](https://circleci.com/gh/nicholasjackson/faas-nats)
+
+This project allows you to listen to Nats.io messages and call OpenFaas functions.  To allow the OpenFaaS function to stay agnostic to the caller it is also possible to register payload transformation templates between the message format and the OpenFaaS function payload.
+
+The listener runs as a standalone application and can be run as a Docker container alongside your OpenFaaS stack, you will also require `gnatsd` to be running.  Information for running nats with OpenFaaS can be found in the Asyncronous calls guide [https://github.com/openfaas/faas/blob/master/guide/asynchronous.md](https://github.com/openfaas/faas/blob/master/guide/asynchronous.md).  Note: this application is not intended to replace asyncronous calls but to allow for implementation of an Event Driven Architecural Pattern where OpenFaaS functions are the unit of work [https://en.wikipedia.org/wiki/Event-driven_architecture](https://en.wikipedia.org/wiki/Event-driven_architecture).
+
+Because the implementation uses Nats.io Subscription queues it is possible to run more than one instance of this application for high availability without suffering duplicate messages.  The message will be delivered to a random instance of faas-nats.
 
 ## Configuration
 To configure which messages to listen to and functions to call a simple YAML configuration file is used...
@@ -9,8 +16,11 @@ nats: nats://192.168.1.113:4222
 nats_cluster_id: test-cluster
 gateway: http://192.168.1.113:8080
 functions:
+    # name of the subscription, does not need to correspond to function name
   - name: info
+    # function to call upon receipt of message
     function_name: info
+    # message to listen to
     message: example.info
  
   - name: echo
@@ -76,3 +86,9 @@ docker run -it \
   quay.io/nicholasjackson/faas-nats:latest \
   -config /etc/faas-nats/example_config.yml
 ```
+
+## Testing
+There is a simple test harness in ./testharness/main.go which can be used to validate the subscription and transformations.
+
+## TODO
+[ ] Implement monitoring and metrics with Prometheus
