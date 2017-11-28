@@ -1,4 +1,5 @@
 nats: nats://192.168.1.113:4222
+nats_cluster_id: test-cluster
 gateway: http://192.168.1.113:8080
 functions:
   - name: info

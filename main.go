@@ -38,9 +38,9 @@ func main() {
 	fmt.Printf("Loaded config: %#s\n", c)
 
 	clientID := fmt.Sprintf("server-%d", time.Now().UnixNano())
-	nc, err = stan.Connect("faas-nats", clientID, stan.NatsURL(c.Nats))
+	nc, err = stan.Connect(c.NatsClusterID, clientID, stan.NatsURL(c.Nats))
 	if err != nil {
-		log.Fatal("Unable to connect to nats server")
+		log.Fatal("Unable to connect to nats server", err)
 	}
 	defer nc.Close()
 

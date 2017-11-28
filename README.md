@@ -6,6 +6,7 @@ To configure which messages to listen to and functions to call a simple YAML con
 
 ```yaml
 nats: nats://192.168.1.113:4222
+nats_cluster_id: test-cluster
 gateway: http://192.168.1.113:8080
 functions:
   - name: info
@@ -33,6 +34,9 @@ functions:
 
 #### nats
 This is a string value with the connection string to your nats server
+
+#### nats_cluster_id
+The name of your nats cluster by default this is `test-cluster`
 
 #### gateway
 This is a string value corresponding to your OpenFaaS gateway

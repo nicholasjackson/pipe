@@ -2,9 +2,10 @@ package config
 
 // Config defines the stucture which the config file wil be parsed into
 type Config struct {
-	Nats      string     `yaml:"nats"`
-	Gateway   string     `yaml:"gateway"`
-	Functions []Function `yaml:"functions"`
+	Nats          string     `yaml:"nats"`
+	NatsClusterID string     `yaml:"nats_cluster_id"`
+	Gateway       string     `yaml:"gateway"`
+	Functions     []Function `yaml:"functions"`
 }
 
 // Function contains the config for a particular function

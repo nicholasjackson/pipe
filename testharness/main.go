@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
-	"github.com/nats-io/nats"
+	stan "github.com/nats-io/go-nats-streaming"
 )
 
 var natsConnection = flag.String("nats", "nats://localhost:4222", "connection string for nats server")
@@ -15,12 +16,13 @@ func main() {
 
 	eventName := "example.echo"
 
-	nc, err := nats.Connect(*natsConnection)
+	clientID := fmt.Sprintf("server-%d", time.Now().UnixNano())
+	nc, err := stan.Connect("test-cluster", clientID, stan.NatsURL(*natsConnection))
 	if err != nil {
-		log.Fatal("Unable to connect to nats server")
+		log.Fatal("Unable to connect to nats server: ", err)
 	}
 
-	nc.Subscribe("example.info.success", func(m *nats.Msg) {
+	nc.Subscribe("example.info.success", func(m *stan.Msg) {
 		log.Println(string(m.Data))
 	})
 
