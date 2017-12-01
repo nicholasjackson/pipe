@@ -2,10 +2,22 @@
 
 
 [[projects]]
+  name = "github.com/DataDog/datadog-go"
+  packages = ["statsd"]
+  revision = "0ddda6bee21174ef6c4873647cb0d6ec9cba996f"
+  version = "1.1.0"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = ["gogoproto","proto","protoc-gen-gogo/descriptor"]
   revision = "342cbe0a04158f6dcb03ca0079991a51a4248c02"
   version = "v0.5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-hclog"
+  packages = ["."]
+  revision = "ca137eb4b4389c9bc6f1a6d887f056bf16c00510"
 
 [[projects]]
   branch = "master"
@@ -26,12 +38,6 @@
   version = "v0.3.4"
 
 [[projects]]
-  name = "github.com/nats-io/nats"
-  packages = ["."]
-  revision = "29f9728a183bf3fa7e809e14edac00b33be72088"
-  version = "v1.3.0"
-
-[[projects]]
   name = "github.com/nats-io/nuid"
   packages = ["."]
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
@@ -46,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e9ce9a0d1e4cf5b5d1fa594e9b194e65def1933c1d22a10ad05f81b81ded1a5b"
+  inputs-digest = "912ca47c680b88cd3f10659077fe6aef227093fbeec23af25a0840d74466762d"
   solver-name = "gps-cdcl"
   solver-version = 1

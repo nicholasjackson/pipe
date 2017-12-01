@@ -1,6 +1,9 @@
-nats: nats://192.168.1.113:4222
+nats: nats://192.168.0.100:4222
 nats_cluster_id: test-cluster
-gateway: http://192.168.1.113:8080
+gateway: http://openfaas.drone.demo.gs:8080
+statsd: localhost:9125
+log_level: DEBUG # trace, error, info
+log_format: text # json
 functions:
   - name: info
     function_name: info
@@ -23,3 +26,12 @@ functions:
       # Transform the raw message with a Go template, assumes the payload is json
       output_template: |
           {{printf "%s" .Raw}}
+  - name: tweet
+    function_name: tweet
+    message: pciture.new
+    templates:
+      input_template: |
+        {
+          "text": "Hey a picture from Selfi Drone #DevTernity #NomadRocks #HashiCorp",
+          "image": "{{ .JSON.Data }}"
+        }

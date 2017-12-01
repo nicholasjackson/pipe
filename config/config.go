@@ -5,6 +5,9 @@ type Config struct {
 	Nats          string     `yaml:"nats"`
 	NatsClusterID string     `yaml:"nats_cluster_id"`
 	Gateway       string     `yaml:"gateway"`
+	StatsD        string     `yaml:"statsd"`
+	LogLevel      string     `yaml:"log_level"`
+	LogFormat     string     `yaml:"log_format"`
 	Functions     []Function `yaml:"functions"`
 }
 
