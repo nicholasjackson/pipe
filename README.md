@@ -15,6 +15,9 @@ To configure which messages to listen to and functions to call a simple YAML con
 nats: nats://192.168.1.113:4222
 nats_cluster_id: test-cluster
 gateway: http://192.168.1.113:8080
+statsd: localhost:9125
+log_level: DEBUG # TRACE, ERROR, INFO
+log_format: text # json
 functions:
     # name of the subscription, does not need to correspond to function name
   - name: info
