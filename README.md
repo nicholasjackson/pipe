@@ -80,6 +80,9 @@ Go format template, before calling the OpenFaaS function the template will be us
 ##### function - templates - input_template
 Go format template, before publishing the success Nats.io message the template will be used to process and transform the message
 
+## Metrics
+Metrics are exported using StatsD to import metrics into Prometheus please use the prometheus StatsD exporter [https://hub.docker.com/r/prom/statsd-exporter/](https://hub.docker.com/r/prom/statsd-exporter/)
+
 ## Running the queue
 To run the listener you can use the build docker container and provide a configuration file as a volume mount.
 
