@@ -97,4 +97,5 @@ docker run -it \
 There is a simple test harness in ./testharness/main.go which can be used to validate the subscription and transformations.
 
 ## TODO
-[x] Implement monitoring and metrics with StatD
+[x] Implement monitoring and metrics with StatsD
+[ ] Handle message wrapping to enable chainging OpenFaaS functions
