@@ -26,6 +26,9 @@ func NewNatsWorker(
 	stats *statsd.Client,
 	logger hclog.Logger,
 ) *NatsWorker {
+
+	template.Logger = logger.Named("templates")
+
 	return &NatsWorker{
 		conn:   nc,
 		client: c,
@@ -43,71 +46,7 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 		nw.stats.Incr("worker.event.register", []string{"message:" + f.Message}, 1)
 
 		s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *stan.Msg) {
-			nw.logger.Info("Handle event", "subject", m.Subject)
-			nw.stats.Incr("worker.event.handle", []string{"message:" + f.Message}, 1)
-
-			functionData := m.Data
-			nw.logger.Debug("Event Data", "data", string(m.Data))
-
-			// do we have a transformation template
-			if f.Templates.InputTemplate != "" {
-				var err error
-				functionData, err = nw.parser.Parse(f.Templates.InputTemplate, m.Data)
-				if err != nil {
-					nw.logger.Error("Error processing intput template", "error", err)
-					nw.stats.Incr("worker.event.error.inputtemplate", []string{"message:" + f.Message}, 1)
-
-					return
-				}
-			}
-
-			nw.logger.Debug("Calling function", "function", f.FunctionName, "payload", functionData)
-
-			resp, err := nw.client.CallFunction(f.FunctionName, functionData)
-			if err != nil {
-				nw.stats.Incr("worker.event.error.functioncall", []string{
-					"message:" + f.Message,
-					"function" + f.FunctionName,
-				}, 1)
-				nw.logger.Error("Error calling function", "error", err)
-
-				return
-			}
-
-			nw.logger.Debug("Function response", "response", string(resp))
-
-			// do we need to publish a success_message
-			if f.SuccessMessage != "" {
-				returnData := resp
-
-				if f.Templates.OutputTemplate != "" {
-
-					var err error
-					returnData, err = nw.parser.Parse(f.Templates.OutputTemplate, resp)
-					if err != nil {
-						nw.logger.Error("Error processing output template", "error", err)
-						nw.stats.Incr(
-							"worker.event.error.outputtemplate",
-							[]string{"message:" + f.Message},
-							1,
-						)
-
-						return
-					}
-				}
-
-				nw.logger.Debug("Publishing message", "message", f.SuccessMessage, "payload", returnData)
-
-				nw.stats.Incr(
-					"worker.event.sendoutput",
-					[]string{
-						"message:" + f.Message,
-						"output:" + f.SuccessMessage,
-					},
-					1,
-				)
-				nw.conn.Publish(f.SuccessMessage, returnData)
-			}
+			nw.handleMessage(f, m)
 		})
 
 		if err != nil {
@@ -119,4 +58,108 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 
 		nw.subs = append(nw.subs, &s)
 	}
+}
+
+func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg) {
+	nw.logger.Info("Handle event", "subject", m.Subject)
+	nw.stats.Incr("worker.event.handle", []string{"message:" + f.Message}, 1)
+
+	nw.logger.Trace("Event Data", "data", string(m.Data))
+
+	data, err := nw.processInputTemplate(f, m.Data)
+	if err != nil {
+		return
+	}
+
+	resp, err := nw.callFunction(f, data)
+	if err != nil {
+		return
+	}
+
+	// do we need to publish a success_message
+	if f.SuccessMessage == "" {
+		return
+	}
+
+	out, err := nw.processOutputTemplate(f, resp)
+	if err != nil {
+		return
+	}
+
+	nw.publishMessage(f, out)
+}
+
+func (nw *NatsWorker) processInputTemplate(f config.Function, data []byte) ([]byte, error) {
+	// do we have a transformation template
+	if f.Templates.InputTemplate != "" {
+		functionData, err := nw.parser.Parse(f.Templates.InputTemplate, data)
+		if err != nil {
+			nw.logger.Error("Error processing intput template", "error", err)
+			nw.stats.Incr("worker.event.error.inputtemplate", []string{"message:" + f.Message}, 1)
+
+			return nil, err
+		}
+
+		nw.logger.Debug("Transformed input template", "template", f.Templates.OutputTemplate, "data", data)
+		return functionData, err
+	}
+
+	return data, nil
+}
+
+func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]byte, error) {
+	if f.Templates.OutputTemplate != "" {
+
+		temp, err := nw.parser.Parse(f.Templates.OutputTemplate, data)
+		if err != nil {
+			nw.logger.Error("Error processing output template", "error", err)
+			nw.stats.Incr(
+				"worker.event.error.outputtemplate",
+				[]string{"message:" + f.Message},
+				1,
+			)
+			return nil, err
+		}
+
+		nw.logger.Debug("Transformed output template", "template", f.Templates.OutputTemplate, "data", data)
+		return temp, err
+	}
+
+	return data, nil
+}
+
+func (nw *NatsWorker) callFunction(f config.Function, payload []byte) ([]byte, error) {
+	nw.logger.Info("Calling function", "function", f.FunctionName)
+	nw.logger.Debug("Function payload", "function", f.FunctionName, "payload", payload)
+
+	resp, err := nw.client.CallFunction(f.FunctionName, f.Query, payload)
+	if err != nil {
+		nw.stats.Incr("worker.event.error.functioncall", []string{
+			"message:" + f.Message,
+			"function" + f.FunctionName,
+		}, 1)
+		nw.logger.Error("Error calling function", "error", err)
+
+		return nil, err
+	}
+
+	nw.logger.Debug("Function response", "response", string(resp))
+	return resp, nil
+}
+
+func (nw *NatsWorker) publishMessage(f config.Function, payload []byte) error {
+
+	nw.logger.Info("Publishing message", "message", f.SuccessMessage)
+	nw.logger.Debug("Publishing message", "message", f.SuccessMessage, "payload", payload)
+
+	nw.stats.Incr(
+		"worker.event.sendoutput",
+		[]string{
+			"message:" + f.Message,
+			"output:" + f.SuccessMessage,
+		},
+		1,
+	)
+
+	return nw.conn.Publish(f.SuccessMessage, payload)
 }

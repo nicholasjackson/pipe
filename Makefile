@@ -1,4 +1,4 @@
-VERSION=0.4.1
+VERSION=0.4.7
 NAMESPACE=quay.io/nicholasjackson
 
 mocks:

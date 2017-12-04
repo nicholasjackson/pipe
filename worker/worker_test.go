@@ -3,6 +3,8 @@ package worker
 import (
 	"testing"
 
+	"github.com/DataDog/datadog-go/statsd"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	stan "github.com/nats-io/go-nats-streaming"
 	"github.com/nicholasjackson/faas-nats/client"
@@ -23,12 +25,15 @@ func setupWorkerTests(t *testing.T) (*is.I, *NatsWorker, *NatsConnectionMock, *c
 	}
 
 	mockedClient := &client.ClientMock{
-		CallFunctionFunc: func(name string, payload []byte) ([]byte, error) {
+		CallFunctionFunc: func(name string, query string, payload []byte) ([]byte, error) {
 			return returnPayload, returnError
 		},
 	}
 
-	return is.New(t), NewNatsWorker(mockedNatsConnection, mockedClient), mockedNatsConnection, mockedClient
+	logger := hclog.New(&hclog.LoggerOptions{Level: hclog.LevelFromString("DEBUG")})
+	stats, _ := statsd.New("")
+
+	return is.New(t), NewNatsWorker(mockedNatsConnection, mockedClient, stats, logger), mockedNatsConnection, mockedClient
 }
 
 func TestRegistersNMessageListeners(t *testing.T) {
@@ -75,9 +80,11 @@ func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
 	is, nw, mc, cl := setupWorkerTests(t)
 
 	c := config.Config{
+		Gateway: "http://myserver.com",
 		Functions: []config.Function{
 			config.Function{
 				Name:    "test1",
+				Query:   "test=yes",
 				Message: "tests.message",
 			},
 		},
@@ -90,8 +97,9 @@ func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
 	msg.Data = []byte("data")
 	f(&msg) // call the function
 
-	is.Equal(1, len(cl.CallFunctionCalls()))                    // expected 1 call to function
-	is.Equal("data", string(cl.CallFunctionCalls()[0].Payload)) // expected raw payload to be passed
+	is.Equal(1, len(cl.CallFunctionCalls()))                      // expected 1 call to function
+	is.Equal("data", string(cl.CallFunctionCalls()[0].Payload))   // expected raw payload to be passed
+	is.Equal("test=yes", string(cl.CallFunctionCalls()[0].Query)) // expected query to be set
 }
 
 func TestWorkerCallsFunctionTransformingMessage(t *testing.T) {
@@ -166,5 +174,5 @@ func TestWorkerPublishesEventPostFunctionCallTransformingPayload(t *testing.T) {
 	msg := stan.Msg{}
 	f(&msg) // call the function
 
-	is.Equal(`{ "nicsname": "nic" }`, string(mc.PublishCalls()[0].Data))
+	is.Equal(`{ "nicsname": "nic" }`, string(mc.PublishCalls()[0].Data)) // expected template to have been transformed
 }

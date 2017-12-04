@@ -97,7 +97,7 @@ func setupStatsD(server, appName string) *statsd.Client {
 	if err != nil {
 		logger.Warn("Unable to create StatsD connection")
 	}
-	stats.Namespace = appName
+	stats.Namespace = appName + "."
 
 	return stats
 }

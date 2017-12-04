@@ -24,7 +24,13 @@ func (p *Parser) Parse(template string, data []byte) ([]byte, error) {
 	// attempt to proecess json
 	json.Unmarshal(data, &pd.JSON)
 
-	tmpl, err := gotemplate.New("template").Parse(template)
+	tmpl, err := gotemplate.New("template").
+		Funcs(gotemplate.FuncMap{
+			"base64encode": base64encode,
+			"base64decode": base64decode,
+		}).
+		Parse(template)
+
 	if err != nil {
 		return nil, err
 	}

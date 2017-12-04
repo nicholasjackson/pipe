@@ -17,7 +17,7 @@ var (
 //
 //         // make and configure a mocked Client
 //         mockedClient := &ClientMock{
-//             CallFunctionFunc: func(name string, payload []byte) ([]byte, error) {
+//             CallFunctionFunc: func(name string, query string, payload []byte) ([]byte, error) {
 // 	               panic("TODO: mock out the CallFunction method")
 //             },
 //         }
@@ -28,7 +28,7 @@ var (
 //     }
 type ClientMock struct {
 	// CallFunctionFunc mocks the CallFunction method.
-	CallFunctionFunc func(name string, payload []byte) ([]byte, error)
+	CallFunctionFunc func(name string, query string, payload []byte) ([]byte, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -36,6 +36,8 @@ type ClientMock struct {
 		CallFunction []struct {
 			// Name is the name argument value.
 			Name string
+			// Query is the query argument value.
+			Query string
 			// Payload is the payload argument value.
 			Payload []byte
 		}
@@ -43,21 +45,23 @@ type ClientMock struct {
 }
 
 // CallFunction calls CallFunctionFunc.
-func (mock *ClientMock) CallFunction(name string, payload []byte) ([]byte, error) {
+func (mock *ClientMock) CallFunction(name string, query string, payload []byte) ([]byte, error) {
 	if mock.CallFunctionFunc == nil {
 		panic("moq: ClientMock.CallFunctionFunc is nil but Client.CallFunction was just called")
 	}
 	callInfo := struct {
 		Name    string
+		Query   string
 		Payload []byte
 	}{
 		Name:    name,
+		Query:   query,
 		Payload: payload,
 	}
 	lockClientMockCallFunction.Lock()
 	mock.calls.CallFunction = append(mock.calls.CallFunction, callInfo)
 	lockClientMockCallFunction.Unlock()
-	return mock.CallFunctionFunc(name, payload)
+	return mock.CallFunctionFunc(name, query, payload)
 }
 
 // CallFunctionCalls gets all the calls that were made to CallFunction.
@@ -65,10 +69,12 @@ func (mock *ClientMock) CallFunction(name string, payload []byte) ([]byte, error
 //     len(mockedClient.CallFunctionCalls())
 func (mock *ClientMock) CallFunctionCalls() []struct {
 	Name    string
+	Query   string
 	Payload []byte
 } {
 	var calls []struct {
 		Name    string
+		Query   string
 		Payload []byte
 	}
 	lockClientMockCallFunction.RLock()

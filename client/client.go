@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -15,7 +16,7 @@ import (
 
 // Client defines an interface for a function client
 type Client interface {
-	CallFunction(name string, payload []byte) ([]byte, error)
+	CallFunction(name string, query string, payload []byte) ([]byte, error)
 }
 
 // Impl is a simple client for calling functions
@@ -31,7 +32,7 @@ func NewClient(gateway string, stats *statsd.Client, logger hclog.Logger) *Impl 
 }
 
 // CallFunction calls the function and returns the response
-func (c *Impl) CallFunction(name string, payload []byte) ([]byte, error) {
+func (c *Impl) CallFunction(name string, query string, payload []byte) ([]byte, error) {
 	startTime := time.Now()
 	defer func(st time.Time) {
 		dur := time.Now().Sub(st)
@@ -40,7 +41,11 @@ func (c *Impl) CallFunction(name string, payload []byte) ([]byte, error) {
 
 	c.stats.Incr("gateway.call.do", []string{"function:" + name}, 1)
 
-	resp, err := http.Post(c.gateway+"/function/"+name, "", bytes.NewBuffer(payload))
+	u, _ := url.Parse(c.gateway)
+	u.Path = "/function/" + name
+	u.RawQuery = query
+
+	resp, err := http.Post(u.String(), "", bytes.NewBuffer(payload))
 	if err != nil {
 		c.stats.Incr("gateway.call.failed", []string{"function:" + name}, 1)
 		return nil, err

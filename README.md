@@ -42,6 +42,25 @@ functions:
           {{printf "%s" .Raw}}
 ```
 
+## Template functions
+### base64encode
+Base64 encode []byte
+
+```yaml
+input_template: |
+{
+  "image": "{{ base64encode .Raw }}"
+}
+```
+
+### base64decode
+Base64 decode a string
+
+```yaml
+input_template: |
+  {{ base64decode .JSON.image }}
+```
+
 #### nats
 This is a string value with the connection string to your nats server
 

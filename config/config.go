@@ -15,6 +15,7 @@ type Config struct {
 type Function struct {
 	Name           string    `yaml:"name"`
 	FunctionName   string    `yaml:"function_name"`
+	Query          string    `yaml:"query_string"`
 	Message        string    `yaml:"message"`
 	SuccessMessage string    `yaml:"success_message"`
 	Templates      Templates `yaml:"templates"`
