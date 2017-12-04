@@ -45,26 +45,28 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 		nw.logger.Info("Registering event", "event", f.Message)
 		nw.stats.Incr("worker.event.register", []string{"message:" + f.Message}, 1)
 
-		s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *stan.Msg) {
-			nw.handleMessage(f, m)
-		})
+		func(f config.Function) {
+			s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *stan.Msg) {
+				nw.handleMessage(f, m)
+			})
 
-		if err != nil {
-			nw.logger.Error("Error registering queue", "error", err.Error())
-			nw.stats.Incr("worker.register.failed", []string{"message:" + f.Message}, 1)
+			if err != nil {
+				nw.logger.Error("Error registering queue", "error", err.Error())
+				nw.stats.Incr("worker.register.failed", []string{"message:" + f.Message}, 1)
 
-			return
-		}
+				return
+			}
 
-		nw.subs = append(nw.subs, &s)
+			nw.subs = append(nw.subs, &s)
+		}(f)
 	}
 }
 
 func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg) {
-	nw.logger.Info("Handle event", "subject", m.Subject)
+	nw.logger.Info("Handle event", "subject", m.Subject, "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered)
 	nw.stats.Incr("worker.event.handle", []string{"message:" + f.Message}, 1)
 
-	nw.logger.Trace("Event Data", "data", string(m.Data))
+	nw.logger.Debug("Event Data", "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "data", string(m.Data))
 
 	data, err := nw.processInputTemplate(f, m.Data)
 	if err != nil {
@@ -94,13 +96,13 @@ func (nw *NatsWorker) processInputTemplate(f config.Function, data []byte) ([]by
 	if f.Templates.InputTemplate != "" {
 		functionData, err := nw.parser.Parse(f.Templates.InputTemplate, data)
 		if err != nil {
-			nw.logger.Error("Error processing intput template", "error", err)
+			nw.logger.Error("Error processing intput template", "subscription", f.Name, "error", err)
 			nw.stats.Incr("worker.event.error.inputtemplate", []string{"message:" + f.Message}, 1)
 
 			return nil, err
 		}
 
-		nw.logger.Debug("Transformed input template", "template", f.Templates.OutputTemplate, "data", data)
+		nw.logger.Debug("Transformed input template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "data", data)
 		return functionData, err
 	}
 
@@ -112,7 +114,7 @@ func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]b
 
 		temp, err := nw.parser.Parse(f.Templates.OutputTemplate, data)
 		if err != nil {
-			nw.logger.Error("Error processing output template", "error", err)
+			nw.logger.Error("Error processing output template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "error", err)
 			nw.stats.Incr(
 				"worker.event.error.outputtemplate",
 				[]string{"message:" + f.Message},
@@ -121,7 +123,7 @@ func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]b
 			return nil, err
 		}
 
-		nw.logger.Debug("Transformed output template", "template", f.Templates.OutputTemplate, "data", data)
+		nw.logger.Debug("Transformed output template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "data", data)
 		return temp, err
 	}
 
@@ -129,8 +131,8 @@ func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]b
 }
 
 func (nw *NatsWorker) callFunction(f config.Function, payload []byte) ([]byte, error) {
-	nw.logger.Info("Calling function", "function", f.FunctionName)
-	nw.logger.Debug("Function payload", "function", f.FunctionName, "payload", payload)
+	nw.logger.Info("Calling function", "subscription", f.Name, "function", f.FunctionName)
+	nw.logger.Debug("Function payload", "subscription", f.Name, "function", f.FunctionName, "payload", payload)
 
 	resp, err := nw.client.CallFunction(f.FunctionName, f.Query, payload)
 	if err != nil {
@@ -138,19 +140,19 @@ func (nw *NatsWorker) callFunction(f config.Function, payload []byte) ([]byte, e
 			"message:" + f.Message,
 			"function" + f.FunctionName,
 		}, 1)
-		nw.logger.Error("Error calling function", "error", err)
+		nw.logger.Error("Error calling function", "subscription", f.Name, "function", f.FunctionName, "error", err)
 
 		return nil, err
 	}
 
-	nw.logger.Debug("Function response", "response", string(resp))
+	nw.logger.Debug("Function response", "subscription", f.Name, "function", f.FunctionName, "response", string(resp))
 	return resp, nil
 }
 
 func (nw *NatsWorker) publishMessage(f config.Function, payload []byte) error {
 
-	nw.logger.Info("Publishing message", "message", f.SuccessMessage)
-	nw.logger.Debug("Publishing message", "message", f.SuccessMessage, "payload", payload)
+	nw.logger.Info("Publishing message", "subscription", f.Name, "message", f.SuccessMessage)
+	nw.logger.Debug("Publishing message", "subscription", f.Name, "message", f.SuccessMessage, "payload", payload)
 
 	nw.stats.Incr(
 		"worker.event.sendoutput",
