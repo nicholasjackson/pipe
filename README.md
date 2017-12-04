@@ -15,6 +15,9 @@ To configure which messages to listen to and functions to call a simple YAML con
 nats: nats://192.168.1.113:4222
 nats_cluster_id: test-cluster
 gateway: http://192.168.1.113:8080
+statsd: localhost:9125
+log_level: DEBUG # TRACE, ERROR, INFO
+log_format: text # json
 functions:
     # name of the subscription, does not need to correspond to function name
   - name: info
@@ -96,6 +99,9 @@ Go format template, before calling the OpenFaaS function the template will be us
 ##### function - templates - input_template
 Go format template, before publishing the success Nats.io message the template will be used to process and transform the message
 
+## Metrics
+Metrics are exported using StatsD to import metrics into Prometheus please use the prometheus StatsD exporter [https://hub.docker.com/r/prom/statsd-exporter/](https://hub.docker.com/r/prom/statsd-exporter/)
+
 ## Running the queue
 To run the listener you can use the build docker container and provide a configuration file as a volume mount.
 
@@ -110,4 +116,5 @@ docker run -it \
 There is a simple test harness in ./testharness/main.go which can be used to validate the subscription and transformations.
 
 ## TODO
-[ ] Implement monitoring and metrics with Prometheus
+[x] Implement monitoring and metrics with StatsD  
+[ ] Handle message wrapping to enable chainging OpenFaaS functions
