@@ -13,7 +13,7 @@ builds:
 
 dockers:
   - 
-    binary: faas-nomad
+    binary: faas-natsd
     image: quay.io/nicholasjackson/faas-nats
     goos: linux
     goarch: amd64
@@ -21,7 +21,7 @@ dockers:
     latest: true
     tag_template: "{{ .Tag }}"
   - 
-    binary: faas-nomad
+    binary: faas-natsd
     image: quay.io/nicholasjackson/faas-nats
     goos: linux
     goarch: arm
