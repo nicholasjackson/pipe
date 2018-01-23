@@ -1,4 +1,4 @@
-VERSION=0.4.10
+VERSION=0.4.11
 NAMESPACE=quay.io/nicholasjackson
 
 mocks:
@@ -24,3 +24,6 @@ push_docker:
 
 run_docker:
 	docker run -it -v $(shell pwd)/example_config.yml:/etc/faas-nats/example_config.yml ${NAMESPACE}/faas-nats:latest -config /etc/faas-nats/example_config.yml
+
+build_all:
+	goreleaser -snapshot -rm-dist -skip-validate
