@@ -63,7 +63,7 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 }
 
 func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg) {
-	nw.logger.Info("Handle event", "subject", m.Subject, "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered)
+	nw.logger.Info("Handle event", "subject", m.Subject, "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "message_size", m.Size()/1000)
 	nw.stats.Incr("worker.event.handle", []string{"message:" + f.Message}, 1)
 
 	nw.logger.Debug("Event Data", "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "data", string(m.Data))
