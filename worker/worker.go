@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"time"
+
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	stan "github.com/nats-io/go-nats-streaming"
@@ -45,9 +47,20 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 		nw.logger.Info("Registering event", "event", f.Message)
 		nw.stats.Incr("worker.event.register", []string{"message:" + f.Message}, 1)
 
-		func(f config.Function) {
+		exp := 48 * time.Hour
+		if f.Expiration != "" {
+			var err error
+			exp, err = time.ParseDuration(f.Expiration)
+			if err != nil {
+				nw.logger.Error("Invalid duration for function", f.Name, f.Expiration)
+				nw.stats.Incr("worker.register.failed", []string{"message:" + f.Message}, 1)
+				continue
+			}
+		}
+
+		func(f config.Function, expiration time.Duration) {
 			s, err := nw.conn.QueueSubscribe(f.Message, "queue."+f.Name, func(m *stan.Msg) {
-				nw.handleMessage(f, m)
+				nw.handleMessage(f, m, expiration)
 			})
 
 			if err != nil {
@@ -58,15 +71,22 @@ func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 			}
 
 			nw.subs = append(nw.subs, &s)
-		}(f)
+		}(f, exp)
 	}
 }
 
-func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg) {
-	nw.logger.Info("Handle event", "subject", m.Subject, "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "message_size", m.Size()/1000)
+func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg, expiration time.Duration) {
+	nw.logger.Info("Handle event", "subject", m.Subject, "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "size", m.Size()/1000)
 	nw.stats.Incr("worker.event.handle", []string{"message:" + f.Message}, 1)
-
 	nw.logger.Debug("Event Data", "subscription", f.Name, "id", m.CRC32, "redelivered", m.Redelivered, "data", string(m.Data))
+
+	// check expiration
+	if time.Now().Sub(time.Unix(0, m.Timestamp)) > expiration {
+		nw.logger.Info("Message expired", "subject", m.Subject, "timestamp", m.Timestamp, "expiration", expiration)
+		nw.stats.Incr("worker.event.expired", []string{"message:" + f.Message}, 1)
+
+		return
+	}
 
 	data, err := nw.processInputTemplate(f, m.Data)
 	if err != nil {

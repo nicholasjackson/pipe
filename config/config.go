@@ -17,6 +17,7 @@ type Function struct {
 	FunctionName   string    `yaml:"function_name"`
 	Query          string    `yaml:"query_string"`
 	Message        string    `yaml:"message"`
+	Expiration     string    `yaml:"expiration"`
 	SuccessMessage string    `yaml:"success_message"`
 	Templates      Templates `yaml:"templates"`
 }

@@ -25,6 +25,10 @@ functions:
     function_name: info
     # message to listen to
     message: example.info
+
+    # any messages which are older than the expiration time will be ignored and not processed by the system
+    # expiration is expressed using Go's duration string format i.e 1000us, 300ms, 1s, 48h, 4d, 1h30m
+    expiration: 5s
  
   - name: echo
     # function to call when an event is received, by default it sends the message

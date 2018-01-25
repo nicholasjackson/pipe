@@ -2,6 +2,7 @@ package worker
 
 import (
 	"testing"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
@@ -34,6 +35,14 @@ func setupWorkerTests(t *testing.T) (*is.I, *NatsWorker, *NatsConnectionMock, *c
 	stats, _ := statsd.New("")
 
 	return is.New(t), NewNatsWorker(mockedNatsConnection, mockedClient, stats, logger), mockedNatsConnection, mockedClient
+}
+
+func createMessage(data []byte) *stan.Msg {
+	msg := &stan.Msg{}
+	msg.Data = data
+	msg.Timestamp = time.Now().UnixNano()
+
+	return msg
 }
 
 func TestRegistersNMessageListeners(t *testing.T) {
@@ -76,6 +85,24 @@ func TestRegistersMessageListenerWithCorrectDetails(t *testing.T) {
 	is.Equal("tests.message", mc.QueueSubscribeCalls()[0].Subject) // expected subject to be set to correct value
 }
 
+func TestDoesNotRegistersMessageListenerWhenInvalidExpiration(t *testing.T) {
+	is, nw, mc, _ := setupWorkerTests(t)
+
+	c := config.Config{
+		Functions: []config.Function{
+			config.Function{
+				Name:       "test1",
+				Message:    "tests.message",
+				Expiration: "pie",
+			},
+		},
+	}
+
+	nw.RegisterMessageListeners(c)
+
+	is.Equal(0, len(mc.QueueSubscribeCalls())) // expected 1 call to subscribe
+}
+
 func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
 	is, nw, mc, cl := setupWorkerTests(t)
 
@@ -93,9 +120,8 @@ func TestWorkerCallsFunctionWithRawMessage(t *testing.T) {
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
 
-	msg := stan.Msg{}
-	msg.Data = []byte("data")
-	f(&msg) // call the function
+	msg := createMessage([]byte("data"))
+	f(msg) // call the function
 
 	is.Equal(1, len(cl.CallFunctionCalls()))                      // expected 1 call to function
 	is.Equal("data", string(cl.CallFunctionCalls()[0].Payload))   // expected raw payload to be passed
@@ -120,12 +146,35 @@ func TestWorkerCallsFunctionTransformingMessage(t *testing.T) {
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
 
-	msg := stan.Msg{}
-	msg.Data = []byte(`{ "name": "nic" }`)
-	f(&msg) // call the function
+	msg := createMessage([]byte(`{ "name": "nic" }`))
+	f(msg) // call the function
 
 	is.Equal(1, len(cl.CallFunctionCalls()))                                     // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(cl.CallFunctionCalls()[0].Payload)) // expected processed payload to be passed
+}
+
+func TestWorkerIgnoresExpiredMessage(t *testing.T) {
+	is, nw, mc, cl := setupWorkerTests(t)
+
+	c := config.Config{
+		Gateway: "http://myserver.com",
+		Functions: []config.Function{
+			config.Function{
+				Name:       "test1",
+				Query:      "test=yes",
+				Message:    "tests.message",
+				Expiration: "1us",
+			},
+		},
+	}
+
+	nw.RegisterMessageListeners(c)
+	f := mc.QueueSubscribeCalls()[0].Cb
+
+	msg := createMessage([]byte("data"))
+	f(msg) // call the function
+
+	is.Equal(0, len(cl.CallFunctionCalls())) // expected 0 calls to function
 }
 
 func TestWorkerPublishesEventPostFunctionCall(t *testing.T) {
@@ -144,8 +193,8 @@ func TestWorkerPublishesEventPostFunctionCall(t *testing.T) {
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
 
-	msg := stan.Msg{}
-	f(&msg) // call the function
+	msg := createMessage(nil)
+	f(msg) // call the function
 
 	is.Equal(1, len(mc.PublishCalls()))
 }
@@ -171,8 +220,8 @@ func TestWorkerPublishesEventPostFunctionCallTransformingPayload(t *testing.T) {
 	nw.RegisterMessageListeners(c)
 	f := mc.QueueSubscribeCalls()[0].Cb
 
-	msg := stan.Msg{}
-	f(&msg) // call the function
+	msg := createMessage(nil)
+	f(msg) // call the function
 
 	is.Equal(`{ "nicsname": "nic" }`, string(mc.PublishCalls()[0].Data)) // expected template to have been transformed
 }
