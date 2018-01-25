@@ -44,8 +44,8 @@ func NewNatsWorker(
 // RegisterMessageListeners registers the messasge listeners
 func (nw *NatsWorker) RegisterMessageListeners(c config.Config) {
 	for _, f := range c.Functions {
-		nw.logger.Info("Registering event", "event", f.Message)
-		nw.stats.Incr("worker.event.register", []string{"message:" + f.Message}, 1)
+		nw.logger.Info("Registering event", "name", f.Name, "event", f.Message)
+		nw.stats.Incr("worker.event.register", []string{"name:" + f.Name, "message:" + f.Message}, 1)
 
 		exp := 48 * time.Hour
 		if f.Expiration != "" {
