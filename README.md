@@ -35,18 +35,33 @@ functions:
     # payload as received unless a input_template is used
     function_name: echo
     message: example.echo
-    # broadcast a message on success of the function, by default it sends the payload
+    
+    # Transform the raw message with a Go template, assumes the payload is json
+    input_template: |
+      {
+        "subject": "{{ .JSON.subject }}"
+      }
+
+    # broadcast n number of messages on success of the function, by default this sends the payload
     # as received unless an output template is used
-    success_message: example.info.success
-    templates:
-      # Transform the raw message with a Go template, assumes the payload is json
-      input_template: |
-        {
-          "subject": "{{ .JSON.subject }}"
-        }
-      # Transform the raw message with a Go template, assumes the payload is json
-      output_template: |
-          {{printf "%s" .Raw}}
+    success_messages: 
+      - example.info.success:
+        # Transform the raw message with a Go template, assumes the payload is json
+          output_template: |
+            {{printf "%s" .Raw}}
+
+      - example.detail.success:
+        # Transform the raw message with a Go template, assumes the payload is json
+          output_template: |
+            {{printf "%s" .Raw}}
+
+    # broadcast n number of messages on failure of the function, by default this sends the 
+    # original message payload as received unless an output template is used
+    failed_messages:
+      - example.info.failed:
+        # Transform the raw message with a Go template, assumes the payload is json
+          output_template: |
+            {{printf "%s" .Raw}}
 ```
 
 ## Template functions

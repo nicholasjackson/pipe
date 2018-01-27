@@ -14,7 +14,6 @@ import (
 	"github.com/nicholasjackson/faas-nats/client"
 	"github.com/nicholasjackson/faas-nats/config"
 	"github.com/nicholasjackson/faas-nats/worker"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const appName = "faas_nats"
@@ -66,13 +65,11 @@ func loadConfig() config.Config {
 	}
 
 	c := config.Config{}
-
-	err = yaml.Unmarshal([]byte(data), &c)
-	if err != nil {
-		log.Fatal("Unable to read config", err)
+	if err := c.Unmarshal(data); err != nil {
+		log.Fatal("Unable to load config", err)
 	}
 
-	fmt.Printf("Loaded config: %#s\n", c)
+	fmt.Printf("Loaded config: %#v\n", c)
 
 	return c
 }
@@ -120,6 +117,6 @@ func healthCheck(rw http.ResponseWriter, r *http.Request) {
 		stats.Incr("connection.nats.disconnected", nil, 1)
 
 		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Sprint(rw, `{"nats": "not connected"}`)
+		fmt.Fprintf(rw, `{"nats": "not connected"}`)
 	}
 }

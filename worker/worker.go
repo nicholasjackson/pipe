@@ -99,22 +99,23 @@ func (nw *NatsWorker) handleMessage(f config.Function, m *stan.Msg, expiration t
 	}
 
 	// do we need to publish a success_message
-	if f.SuccessMessage == "" {
-		return
+	for _, m := range f.SuccessMessages {
+
+		out, err := nw.processOutputTemplate(f, m, resp)
+		if err != nil {
+			return
+		}
+
+		nw.publishMessage(f, m, out)
 	}
 
-	out, err := nw.processOutputTemplate(f, resp)
-	if err != nil {
-		return
-	}
-
-	nw.publishMessage(f, out)
+	return
 }
 
 func (nw *NatsWorker) processInputTemplate(f config.Function, data []byte) ([]byte, error) {
 	// do we have a transformation template
-	if f.Templates.InputTemplate != "" {
-		functionData, err := nw.parser.Parse(f.Templates.InputTemplate, data)
+	if f.InputTemplate != "" {
+		functionData, err := nw.parser.Parse(f.InputTemplate, data)
 		if err != nil {
 			nw.logger.Error("Error processing intput template", "subscription", f.Name, "error", err)
 			nw.stats.Incr("worker.event.error.inputtemplate", []string{"message:" + f.Message}, 1)
@@ -122,19 +123,19 @@ func (nw *NatsWorker) processInputTemplate(f config.Function, data []byte) ([]by
 			return nil, err
 		}
 
-		nw.logger.Debug("Transformed input template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "data", data)
+		nw.logger.Debug("Transformed input template", "subscription", f.Name, "template", f.InputTemplate, "data", data)
 		return functionData, err
 	}
 
 	return data, nil
 }
 
-func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]byte, error) {
-	if f.Templates.OutputTemplate != "" {
+func (nw *NatsWorker) processOutputTemplate(f config.Function, s config.SuccessMessage, data []byte) ([]byte, error) {
+	if s.OutputTemplate != "" {
 
-		temp, err := nw.parser.Parse(f.Templates.OutputTemplate, data)
+		temp, err := nw.parser.Parse(s.OutputTemplate, data)
 		if err != nil {
-			nw.logger.Error("Error processing output template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "error", err)
+			nw.logger.Error("Error processing output template", "subscription", f.Name, "template", s.OutputTemplate, "error", err)
 			nw.stats.Incr(
 				"worker.event.error.outputtemplate",
 				[]string{"message:" + f.Message},
@@ -143,7 +144,7 @@ func (nw *NatsWorker) processOutputTemplate(f config.Function, data []byte) ([]b
 			return nil, err
 		}
 
-		nw.logger.Debug("Transformed output template", "subscription", f.Name, "template", f.Templates.OutputTemplate, "data", data)
+		nw.logger.Debug("Transformed output template", "subscription", f.Name, "template", s.OutputTemplate, "data", data)
 		return temp, err
 	}
 
@@ -169,19 +170,19 @@ func (nw *NatsWorker) callFunction(f config.Function, payload []byte) ([]byte, e
 	return resp, nil
 }
 
-func (nw *NatsWorker) publishMessage(f config.Function, payload []byte) error {
+func (nw *NatsWorker) publishMessage(f config.Function, s config.SuccessMessage, payload []byte) error {
 
-	nw.logger.Info("Publishing message", "subscription", f.Name, "message", f.SuccessMessage)
-	nw.logger.Debug("Publishing message", "subscription", f.Name, "message", f.SuccessMessage, "payload", payload)
+	nw.logger.Info("Publishing message", "subscription", f.Name, "message", s.Name)
+	nw.logger.Debug("Publishing message", "subscription", f.Name, "message", s.Name, "payload", payload)
 
 	nw.stats.Incr(
 		"worker.event.sendoutput",
 		[]string{
 			"message:" + f.Message,
-			"output:" + f.SuccessMessage,
+			"output:" + s.Name,
 		},
 		1,
 	)
 
-	return nw.conn.Publish(f.SuccessMessage, payload)
+	return nw.conn.Publish(s.Name, payload)
 }

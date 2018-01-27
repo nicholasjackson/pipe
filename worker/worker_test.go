@@ -134,11 +134,9 @@ func TestWorkerCallsFunctionTransformingMessage(t *testing.T) {
 	c := config.Config{
 		Functions: []config.Function{
 			config.Function{
-				Name:    "test1",
-				Message: "tests.message",
-				Templates: config.Templates{
-					InputTemplate: `{ "nicsname": "{{ .JSON.name }}" }`,
-				},
+				Name:          "test1",
+				Message:       "tests.message",
+				InputTemplate: `{ "nicsname": "{{ .JSON.name }}" }`,
 			},
 		},
 	}
@@ -183,9 +181,11 @@ func TestWorkerPublishesEventPostFunctionCall(t *testing.T) {
 	c := config.Config{
 		Functions: []config.Function{
 			config.Function{
-				Name:           "test1",
-				Message:        "tests.message",
-				SuccessMessage: "tests.message.success",
+				Name:    "test1",
+				Message: "tests.message",
+				SuccessMessages: []config.SuccessMessage{
+					config.SuccessMessage{Name: "tests.message.success"},
+				},
 			},
 		},
 	}
@@ -199,17 +199,46 @@ func TestWorkerPublishesEventPostFunctionCall(t *testing.T) {
 	is.Equal(1, len(mc.PublishCalls()))
 }
 
+func TestWorkerPublishesMultipleEventsPostFunctionCall(t *testing.T) {
+	is, nw, mc, _ := setupWorkerTests(t)
+
+	c := config.Config{
+		Functions: []config.Function{
+			config.Function{
+				Name:    "test1",
+				Message: "tests.message",
+				SuccessMessages: []config.SuccessMessage{
+					config.SuccessMessage{Name: "tests.message.success"},
+					config.SuccessMessage{Name: "tests.message2.success"},
+				},
+			},
+		},
+	}
+
+	nw.RegisterMessageListeners(c)
+	f := mc.QueueSubscribeCalls()[0].Cb
+
+	msg := createMessage(nil)
+	f(msg) // call the function
+
+	is.Equal(2, len(mc.PublishCalls()))                           // should publish two messages
+	is.Equal("tests.message.success", mc.PublishCalls()[0].Subj)  // should publish message with correct subject
+	is.Equal("tests.message2.success", mc.PublishCalls()[1].Subj) // should publish message with correct subject
+}
+
 func TestWorkerPublishesEventPostFunctionCallTransformingPayload(t *testing.T) {
 	is, nw, mc, _ := setupWorkerTests(t)
 
 	c := config.Config{
 		Functions: []config.Function{
 			config.Function{
-				Name:           "test1",
-				Message:        "tests.message",
-				SuccessMessage: "tests.message.success",
-				Templates: config.Templates{
-					OutputTemplate: `{ "nicsname": "{{ .JSON.name }}" }`,
+				Name:    "test1",
+				Message: "tests.message",
+				SuccessMessages: []config.SuccessMessage{
+					config.SuccessMessage{
+						Name:           "tests.message.success",
+						OutputTemplate: `{ "nicsname": "{{ .JSON.name }}" }`,
+					},
 				},
 			},
 		},
