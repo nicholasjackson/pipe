@@ -64,6 +64,30 @@ functions:
             {{printf "%s" .Raw}}
 ```
 
+## Template values
+### .Raw
+Return raw binary data as an array of bytes from the message
+
+### .JSON
+If the message type is application/json return an object which allows access to elements
+i.e.   
+Given:  
+```json
+{
+  "Pets": [
+    {"name": "fido"}
+  ]
+}
+```
+
+Then:  
+```
+  {{ .JSON.Pets[0].name }} // fido
+```
+
+Note .JSON does not convert the output to JSON format, writing the direct output of .JSON.Pets would produce a go formatted
+object.  To output json see the template function `tojson`.
+
 ## Template functions
 ### base64encode
 Base64 encode []byte
@@ -80,7 +104,14 @@ Base64 decode a string
 
 ```yaml
 input_template: |
-  {{ base64decode .JSON.image }}
+  {{ base64decode .JSON.Image }}
+```
+
+### tojson
+Convert to valid json
+```yaml
+input_template: |
+  {{ tojson .JSON.Pets }}
 ```
 
 #### nats

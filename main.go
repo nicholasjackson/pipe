@@ -23,8 +23,10 @@ var nc stan.Conn
 var stats *statsd.Client
 var logger hclog.Logger
 
+var version = "notset"
+
 func main() {
-	fmt.Println("Starting OpenFaaS Queue (NATS.io)")
+	fmt.Println("Starting OpenFaaS Queue (NATS.io) Version:", version)
 
 	flag.Parse()
 

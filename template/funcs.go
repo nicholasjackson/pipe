@@ -2,6 +2,7 @@ package template
 
 import (
 	"encoding/base64"
+	"encoding/json"
 
 	hclog "github.com/hashicorp/go-hclog"
 )
@@ -23,4 +24,13 @@ func base64decode(v string) []byte {
 	}
 
 	return data
+}
+
+func toJSON(v interface{}) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		Logger.Error("jsonencode", "error", err)
+	}
+
+	return string(data)
 }
