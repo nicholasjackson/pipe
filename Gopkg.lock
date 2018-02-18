@@ -8,6 +8,24 @@
   version = "1.1.0"
 
 [[projects]]
+  name = "github.com/agext/levenshtein"
+  packages = ["."]
+  revision = "5f10fee965225ac1eecdc234c09daf5cd9e7f7b6"
+  version = "v1.2.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/apparentlymart/go-textseg"
+  packages = ["textseg"]
+  revision = "b836f5c4d331d1945a2fead7188db25432d73b69"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/gogo/protobuf"
   packages = ["gogoproto","proto","protoc-gen-gogo/descriptor"]
   revision = "342cbe0a04158f6dcb03ca0079991a51a4248c02"
@@ -21,9 +39,21 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/hashicorp/hcl2"
+  packages = ["hcl","hcl/hclsyntax","hcl/json","hclparse"]
+  revision = "5ca9713bf06addcefc0a4e16f779e43a2c88570c"
+
+[[projects]]
+  branch = "master"
   name = "github.com/matryer/is"
   packages = ["."]
   revision = "c0323ceb4e996e4a8795670d1fb6f60e65b82fd2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mitchellh/go-wordwrap"
+  packages = ["."]
+  revision = "ad45545899c7b13c020ea92b2072220eefad42b8"
 
 [[projects]]
   name = "github.com/nats-io/go-nats"
@@ -44,6 +74,30 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/zclconf/go-cty"
+  packages = ["cty","cty/convert","cty/function","cty/function/stdlib","cty/gocty","cty/json","cty/set"]
+  revision = "709e4033eeb037dc543dbc2048065dfb814ce316"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
+  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -52,6 +106,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "912ca47c680b88cd3f10659077fe6aef227093fbeec23af25a0840d74466762d"
+  inputs-digest = "de23320de0e36e3e68b05b10f6fc32cc8f475c65117461859a35cd1a8ea76c11"
   solver-name = "gps-cdcl"
   solver-version = 1

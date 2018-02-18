@@ -1,44 +1,97 @@
 package config
 
 import (
-	"fmt"
+	"errors"
 
-	yaml "gopkg.in/yaml.v2"
+	"github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl2/hcl/hclsyntax"
+	"github.com/hashicorp/hcl2/hclparse"
+	"github.com/nicholasjackson/faas-nats/pipe"
+	"github.com/nicholasjackson/faas-nats/providers"
+	nats "github.com/nicholasjackson/faas-nats/providers/nats_io"
 )
 
-// Config defines the stucture which the config file wil be parsed into
 type Config struct {
-	Nats          string     `yaml:"nats"`
-	NatsClusterID string     `yaml:"nats_cluster_id"`
-	Gateway       string     `yaml:"gateway"`
-	StatsD        string     `yaml:"statsd"`
-	LogLevel      string     `yaml:"log_level"`
-	LogFormat     string     `yaml:"log_format"`
-	Functions     []Function `yaml:"functions"`
+	Inputs          map[string]providers.Provider
+	Outputs         map[string]providers.Provider
+	Pipes           map[string]*pipe.Pipe
+	ConnectionPools map[string]providers.ConnectionPool
 }
 
-// Function contains the config for a particular function
-type Function struct {
-	Name            string           `yaml:"name"`
-	FunctionName    string           `yaml:"function_name"`
-	Query           string           `yaml:"query_string"`
-	Message         string           `yaml:"message"`
-	Expiration      string           `yaml:"expiration"`
-	SuccessMessages []SuccessMessage `yaml:"success_messages"`
-	InputTemplate   string           `yaml:"input_template"`
+func ParseHCLFile(file string) (Config, error) {
+	parser := hclparse.NewParser()
+
+	config := Config{
+		ConnectionPools: make(map[string]providers.ConnectionPool),
+		Inputs:          make(map[string]providers.Provider),
+		Outputs:         make(map[string]providers.Provider),
+		Pipes:           make(map[string]*pipe.Pipe),
+	}
+
+	f, diag := parser.ParseHCLFile(file)
+	if diag.HasErrors() {
+		return config, errors.New(diag.Error())
+	}
+
+	body, ok := f.Body.(*hclsyntax.Body)
+	if !ok {
+		return config, errors.New("Error getting body")
+	}
+
+	b := body.Blocks[0]
+
+	switch b.Type {
+
+	case "input":
+		if err := processInput(&config, b); err != nil {
+			return config, err
+		}
+
+	case "pipe":
+		if err := processPipe(&config, b); err != nil {
+			return config, err
+		}
+	}
+
+	return config, nil
 }
 
-// SuccessMessage is a structure containing the details of a message to broadcast on success
-type SuccessMessage struct {
-	Name           string `yaml:"name"`
-	OutputTemplate string `yaml:"output_template"`
+func processInput(c *Config, b *hclsyntax.Block) error {
+	var i providers.Provider
+
+	switch b.Labels[0] {
+	case "nats_queue":
+		i = &nats.StreamingProvider{}
+		if c.ConnectionPools["nats_queue"] == nil {
+			c.ConnectionPools["nats_queue"] = &nats.StreamingConnectionPool{}
+		}
+	}
+
+	if err := decodeBody(b, i); err != nil {
+		return err
+	}
+
+	c.Inputs[b.Labels[1]] = i
+
+	return nil
 }
 
-// Unmarshal parses a slice of bytes into the config template
-func (c *Config) Unmarshal(data []byte) error {
-	err := yaml.Unmarshal(data, c)
-	if err != nil {
-		return fmt.Errorf("Unable to read config: %s", err)
+func processPipe(c *Config, b *hclsyntax.Block) error {
+	p := pipe.Pipe{}
+
+	if err := decodeBody(b, &p); err != nil {
+		return err
+	}
+
+	c.Pipes[b.Labels[0]] = &p
+
+	return nil
+}
+
+func decodeBody(b *hclsyntax.Block, p interface{}) error {
+	diag := gohcl.DecodeBody(b.Body, nil, p)
+	if diag.HasErrors() {
+		return errors.New(diag.Error())
 	}
 
 	return nil

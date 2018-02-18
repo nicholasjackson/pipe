@@ -3,98 +3,63 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/matryer/is"
+	nats "github.com/nicholasjackson/faas-nats/providers/nats_io"
 )
 
-var exampleConfig = `
-nats: nats://192.168.1.113:4222
-nats_cluster_id: test-cluster
-gateway: http://192.168.1.113:8080
-statsd: localhost:9125
-log_level: DEBUG # TRACE, ERROR, INFO
-log_format: text # json
-functions:
-    # name of the subscription, does not need to correspond to function name
-  - name: info
-    # function to call upon receipt of message
-    function_name: info
+func TestParsesConfigPipeHCL(t *testing.T) {
+	is := is.New(t)
 
-    # query string to pass to function
-    query_string: abc=123
+	c, err := ParseHCLFile("../test_fixtures/pipe/standard.hcl")
 
-    # message to listen to
-    message: example.info
-
-    # any messages which are older than the expiration time will be ignored and not processed by the system
-    # expiration is expressed using Go's duration string format i.e 1000us, 300ms, 1s, 48h, 4d, 1h30m
-    expiration: 5s
- 
-  - name: echo
-    # function to call when an event is received, by default it sends the message
-    # payload as received unless a input_template is used
-    function_name: echo
-    message: example.echo
-    
-    # Transform the raw message with a Go template, assumes the payload is json
-    input_template: |
-      {
-        "subject": "{{ .JSON.subject }}"
-      }
-
-    # broadcast n number of messages on success of the function, by default this sends the payload
-    # as received unless an output template is used
-    success_messages: 
-      - name: example.info.success
-        # Transform the raw message with a Go template, assumes the payload is json
-        output_template: |
-          {{printf "%s" .Raw}}
-  
-      - name: example.detail.success
-        output_template: |
-          {{printf "%s" .Raw}}
-  
-    # broadcast n number of messages on failure of the function, by default this sends the 
-    # original message payload as received unless an output template is used
-    failed_messages:
-      - example.info.failed:
-        # Transform the raw message with a Go template, assumes the payload is json
-        output_template: |
-          {{printf "%s" .Raw}}
-`
-
-func TestLoadsConfig(t *testing.T) {
-	c := Config{}
-	err := c.Unmarshal([]byte(exampleConfig))
-
-	assert.Nil(t, err)
+	is.NoErr(err)             // error should have been nil
+	is.Equal(1, len(c.Pipes)) // should have returned one pipe
 }
 
-func TestReturnsErrorOnBadConfig(t *testing.T) {
-	c := Config{}
-	err := c.Unmarshal([]byte("junk"))
+func TestParsesConfigPipeHCLNoFail(t *testing.T) {
+	is := is.New(t)
 
-	assert.NotNil(t, err)
+	c, err := ParseHCLFile("../test_fixtures/pipe/no_fail.hcl")
+
+	is.NoErr(err)                                     // error should have been nil
+	is.Equal(1, len(c.Pipes))                         // should have returned one pipe
+	is.Equal(0, len(c.Pipes["process_image"].OnFail)) // should have returned 0 fail blocks
 }
 
-func TestUnmarshalsFunctions(t *testing.T) {
-	c := Config{}
-	err := c.Unmarshal([]byte(exampleConfig))
+func TestParsesConfigPipeHCLNoSuccess(t *testing.T) {
+	is := is.New(t)
 
-	assert.Nil(t, err)
-	assert.Equal(t, len(c.Functions), 2)
-	assert.Equal(t, "info", c.Functions[0].Name)
-	assert.Equal(t, "info", c.Functions[0].FunctionName)
-	assert.Equal(t, "abc=123", c.Functions[0].Query)
-	assert.Equal(t, "example.info", c.Functions[0].Message)
-	assert.Equal(t, "5s", c.Functions[0].Expiration)
-	assert.Contains(t, c.Functions[1].InputTemplate, "\"subject\":")
+	c, err := ParseHCLFile("../test_fixtures/pipe/no_success.hcl")
+
+	is.NoErr(err)                                        // error should have been nil
+	is.Equal(1, len(c.Pipes))                            // should have returned one pipe
+	is.Equal(0, len(c.Pipes["process_image"].OnSuccess)) // should have returned 0 success blocks
 }
 
-func TestUnmarshalsSuccessMessages(t *testing.T) {
-	c := Config{}
-	err := c.Unmarshal([]byte(exampleConfig))
+func TestParsesConfigNatsProviderHCL(t *testing.T) {
+	is := is.New(t)
 
-	assert.Nil(t, err)
-	assert.Equal(t, "example.info.success", c.Functions[1].SuccessMessages[0].Name)
-	assert.Contains(t, c.Functions[1].SuccessMessages[0].OutputTemplate, "{{printf ")
+	c, err := ParseHCLFile("../test_fixtures/providers/nats_io_input.hcl")
+
+	is.NoErr(err)              // error should have been nil
+	is.Equal(1, len(c.Inputs)) // should have returned one input provider
+
+	p, ok := c.Inputs["nats_messages_in"].(*nats.StreamingProvider)
+	is.True(ok) // should have returned a StreamingProvider
+
+	is.Equal("nats://myserver.com", p.Server) // should have set the server to a valid value
+	is.Equal("abc123", p.ClusterID)           // should have set the cluster id to a valid value
+	is.Equal("mymessagequeue", p.Queue)       // should have set the messagequeue to a valid value
+
+	is.Equal("xxx", p.AuthBasic.User)     // should have set basic auth user
+	is.Equal("xxx", p.AuthBasic.Password) // should have set basic auth password
+
+	is.Equal("cacert", p.AuthMTLS.TLSClientCert)     // should have set mtls auth client cert
+	is.Equal("cakey", p.AuthMTLS.TLSClientKey)       // should have set mtls auth client key
+	is.Equal("caclient", p.AuthMTLS.TLSClientCACert) // should have set mtls auth ca cert
+
+	is.True(c.ConnectionPools["nats_queue"] != nil) // should have created a connection pool
+
+	_, ok = c.ConnectionPools["nats_queue"].(*nats.StreamingConnectionPool)
+	is.True(ok) // should have create a connection pool of type nats.StreamingConnectionPool
 }

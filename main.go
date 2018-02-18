@@ -3,17 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	stan "github.com/nats-io/go-nats-streaming"
-	"github.com/nicholasjackson/faas-nats/client"
-	"github.com/nicholasjackson/faas-nats/config"
-	"github.com/nicholasjackson/faas-nats/worker"
 )
 
 const appName = "faas_nats"
@@ -27,37 +20,39 @@ var version = "notset"
 
 func main() {
 	fmt.Println("Starting OpenFaaS Queue (NATS.io) Version:", version)
+}
 
-	flag.Parse()
+/*
+		flag.Parse()
 
-	c := loadConfig()
-	logger = setupLogging(c, appName)
-	stats = setupStatsD(c.StatsD, appName)
+		c := loadConfig()
+		logger = setupLogging(c, appName)
+		stats = setupStatsD(c.StatsD, appName)
 
-	var err error
-	nc, err = setupNats(c, appName)
-	if err != nil {
-		panic(err)
-	}
+		var err error
+		nc, err = setupNats(c, appName)
+		if err != nil {
+			panic(err)
+		}
 
-	defer nc.Close()
+		defer nc.Close()
 
-	client := client.NewClient(
-		c.Gateway,
-		stats,
-		logger.Named("gateway-client"),
-	)
+		client := client.NewClient(
+			c.Gateway,
+			stats,
+			logger.Named("gateway-client"),
+		)
 
-	worker := worker.NewNatsWorker(
-		nc,
-		client,
-		stats,
-		logger.Named("event-worker"),
-	)
-	worker.RegisterMessageListeners(c)
+			worker := worker.NewNatsWorker(
+				nc,
+				client,
+				stats,
+				logger.Named("event-worker"),
+			)
+			worker.RegisterMessageListeners(c)
 
-	http.DefaultServeMux.HandleFunc("/health", healthCheck)
-	http.ListenAndServe(":9999", nil)
+		http.DefaultServeMux.HandleFunc("/health", healthCheck)
+		http.ListenAndServe(":9999", nil)
 }
 
 func loadConfig() config.Config {
@@ -122,3 +117,4 @@ func healthCheck(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, `{"nats": "not connected"}`)
 	}
 }
+*/
