@@ -1,6 +1,10 @@
 package nats
 
-import "github.com/nicholasjackson/faas-nats/providers"
+import (
+	"github.com/DataDog/datadog-go/statsd"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/nicholasjackson/faas-nats/providers"
+)
 
 type StreamingProvider struct {
 	Name      string
@@ -26,7 +30,14 @@ func (sp *StreamingProvider) Type() string {
 	return "nats_queue"
 }
 
-func (sp *StreamingProvider) Setup(cp providers.ConnectionPool) error {
+func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
+	pool := cp.(*StreamingConnectionPool)
+
+	_, err := pool.GetConnection(sp.Server, sp.ClusterID)
+	if err != nil {
+		stats.Incr("connection.nats.failed", nil, 1)
+		logger.Error("Unable to connect to nats server", "error", err)
+	}
 	return nil
 }
 

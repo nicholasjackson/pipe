@@ -1,10 +1,10 @@
-package worker
+package nats
 
-//go:generate moq -out mock_conn_test.go . NatsConnection
 import stan "github.com/nats-io/go-nats-streaming"
 
-// NatsConnection  defines the behaviour required for the Nats connection
-type NatsConnection interface {
+//go:generate moq -out mock_connection.go . Connection
+// Connection  defines the behaviour required for the Nats connection
+type Connection interface {
 	QueueSubscribe(
 		subject,
 		qgroup string,

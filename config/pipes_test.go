@@ -3,17 +3,22 @@ package config
 import (
 	"testing"
 
+	"github.com/DataDog/datadog-go/statsd"
+	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	"github.com/nicholasjackson/faas-nats/pipe"
 	"github.com/nicholasjackson/faas-nats/providers"
 )
+
+var testLogger hclog.Logger
+var testStatsD *statsd.Client
 
 func buildConfig() (*Config, *providers.ProviderMock) {
 	providerMock := &providers.ProviderMock{
 		ListenFunc: func() (<-chan *providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
-		SetupFunc: func(cp providers.ConnectionPool) error {
+		SetupFunc: func(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
 			return nil
 		},
 		StopFunc: func() error {
@@ -56,13 +61,16 @@ func buildConfig() (*Config, *providers.ProviderMock) {
 
 func setupPipes(t *testing.T) (*is.I, *Config, *providers.ProviderMock) {
 	c, pm := buildConfig()
+	testLogger = hclog.Default()
+	testStatsD, _ = statsd.New("localhost:8125")
+
 	return is.New(t), c, pm
 }
 
 func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c)
+	p := SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(1, len(p))                                               // should have created one pipe
 	is.Equal(c.Inputs["test_provider"], p["test_pipe"].InputProvider) // should have set the correct input provider
@@ -71,7 +79,7 @@ func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {
 func TestSetupPipesCallsSetupOnTheInputProvider(t *testing.T) {
 	is, c, m := setupPipes(t)
 
-	_ = SetupPipes(*c)
+	_ = SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
@@ -80,7 +88,7 @@ func TestSetupPipesCallsSetupOnTheInputProvider(t *testing.T) {
 func TestSetupPipesSetsTheCorrectActionOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c)
+	p := SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(1, len(p))                                                        // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].Action.OutputProvider) // should have set the correct output provider
@@ -89,7 +97,7 @@ func TestSetupPipesSetsTheCorrectActionOutputProviderOnThePipe(t *testing.T) {
 func TestSetupPipesCallsSetupOnTheActionOutputProvider(t *testing.T) {
 	is, c, m := setupPipes(t)
 
-	_ = SetupPipes(*c)
+	_ = SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[1].Cp) // should have passed the mock provider
@@ -98,7 +106,7 @@ func TestSetupPipesCallsSetupOnTheActionOutputProvider(t *testing.T) {
 func TestSetupPipesSetsTheCorrectSuccessOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c)
+	p := SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(1, len(p))                                                              // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].OnSuccess[0].OutputProvider) // should have set the correct output provider
@@ -107,7 +115,7 @@ func TestSetupPipesSetsTheCorrectSuccessOutputProviderOnThePipe(t *testing.T) {
 func TestSetupPipesCallsSetupOnTheSuccessOutputProvider(t *testing.T) {
 	is, c, m := setupPipes(t)
 
-	_ = SetupPipes(*c)
+	_ = SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[2].Cp) // should have passed the mock provider
@@ -116,7 +124,7 @@ func TestSetupPipesCallsSetupOnTheSuccessOutputProvider(t *testing.T) {
 func TestSetupPipesSetsTheCorrectFailOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c)
+	p := SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(1, len(p))                                                           // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].OnFail[0].OutputProvider) // should have set the correct output provider
@@ -125,7 +133,7 @@ func TestSetupPipesSetsTheCorrectFailOutputProviderOnThePipe(t *testing.T) {
 func TestSetupPipesCallsSetupOnTheFailOutputProvider(t *testing.T) {
 	is, c, m := setupPipes(t)
 
-	_ = SetupPipes(*c)
+	_ = SetupPipes(*c, testLogger, testStatsD)
 
 	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[3].Cp) // should have passed the mock provider
