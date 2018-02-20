@@ -12,3 +12,8 @@ type Connection interface {
 		opts ...stan.SubscriptionOption) (stan.Subscription, error)
 	Publish(subj string, data []byte) error
 }
+
+//go:generate moq -out mock_connection_pool.go . ConnectionPool
+type ConnectionPool interface {
+	GetConnection(server, clusterID string) (Connection, error)
+}

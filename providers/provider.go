@@ -6,7 +6,10 @@ import (
 )
 
 type Message struct {
-	Data []byte
+	Data        []byte
+	Timestamp   int64
+	Redelivered bool
+	Sequence    uint64
 }
 
 // Ack acknowledged receipt and processing of a message
