@@ -17,3 +17,8 @@ type Connection interface {
 type ConnectionPool interface {
 	GetConnection(server, clusterID string) (Connection, error)
 }
+
+//go:generate moq -out mock_subscription.go . Subscription
+type Subscription interface {
+	stan.Subscription
+}

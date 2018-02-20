@@ -10,8 +10,17 @@ import (
 	stan "github.com/nats-io/go-nats-streaming"
 )
 
-func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *ConnectionMock) {
+func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *ConnectionMock, *SubscriptionMock) {
 	is := is.New(t)
+
+	mockedSubscription := &SubscriptionMock{
+		CloseFunc: func() error {
+			return nil
+		},
+		UnsubscribeFunc: func() error {
+			return nil
+		},
+	}
 
 	mockedConnection := &ConnectionMock{
 		PublishFunc: func(subj string, data []byte) error {
@@ -22,7 +31,7 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 			qgroup string,
 			cb stan.MsgHandler,
 			opts ...stan.SubscriptionOption) (stan.Subscription, error) {
-			return nil, nil
+			return mockedSubscription, nil
 		},
 	}
 
@@ -41,23 +50,23 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 	stats, _ := statsd.New("http://localhost:8125")
 	p.Setup(mockedConnectionPool, hclog.Default(), stats)
 
-	return is, p, mockedConnection
+	return is, p, mockedConnection, mockedSubscription
 }
 
 func TestTypeEqualsNatsQueue(t *testing.T) {
-	is, p, _ := setupStreamingProvider(t)
+	is, p, _, _ := setupStreamingProvider(t)
 
 	is.Equal("nats_queue", p.Type())
 }
 
 func TestAssignsConnectionFromPool(t *testing.T) {
-	is, p, cm := setupStreamingProvider(t)
+	is, p, cm, _ := setupStreamingProvider(t)
 
 	is.Equal(p.connection, cm) // should have set the connection to the connection mock
 }
 
 func TestListenRegistersToListenForMessagesOnAQueue(t *testing.T) {
-	is, p, cm := setupStreamingProvider(t)
+	is, p, cm, _ := setupStreamingProvider(t)
 	p.Listen()
 
 	is.Equal(1, len(cm.QueueSubscribeCalls()))                       // should have subscribed to a queue
@@ -66,7 +75,7 @@ func TestListenRegistersToListenForMessagesOnAQueue(t *testing.T) {
 }
 
 func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
-	is, p, _ := setupStreamingProvider(t)
+	is, p, _, _ := setupStreamingProvider(t)
 	msgs, err := p.Listen()
 
 	is.NoErr(err)
@@ -89,4 +98,13 @@ func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		is.Fail() // message received timeout
 	}
+}
+
+func TestStopStopsListeningAndCancelsTheQueue(t *testing.T) {
+	is, p, _, ms := setupStreamingProvider(t)
+	p.Listen()
+	p.Stop()
+
+	is.Equal(1, len(ms.UnsubscribeCalls())) // should have unsubscribed
+	is.Equal(1, len(ms.CloseCalls()))       // should have closed the subscription
 }

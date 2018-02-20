@@ -77,6 +77,9 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 }
 
 func (sp *StreamingProvider) Stop() error {
+	sp.subscription.Close()
+	sp.subscription.Unsubscribe()
+
 	return nil
 }
 
