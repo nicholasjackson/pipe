@@ -1,4 +1,4 @@
-pipe "process_image" {
+pipe "process_image_fail" {
   input = "sqs_messages_in"
   // do not process events older than
   expiration = "1hr" 

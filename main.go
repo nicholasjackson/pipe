@@ -3,67 +3,43 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
-	stan "github.com/nats-io/go-nats-streaming"
+	"github.com/nicholasjackson/faas-nats/config"
 )
 
-const appName = "faas_nats"
+const appName = "pipe"
 
-var configFile = flag.String("config", "", "configuration file continaing events to monitor")
-var nc stan.Conn
+var configFolder = flag.String("config", "", "directory containing configuration files")
+var statsDAddress = flag.String("statsd", "localhost:8125", "statsD server")
+var logFormat = flag.String("log_format", "text", "log format json | text")
+var logLevel = flag.String("log_level", "INFO", "log level INFO | DEBUG | ERROR | TRACE")
+
 var stats *statsd.Client
 var logger hclog.Logger
 
 var version = "notset"
 
 func main() {
-	fmt.Println("Starting OpenFaaS Queue (NATS.io) Version:", version)
-}
+	fmt.Println("Starting Pipe Version:", version)
 
-/*
-		flag.Parse()
+	flag.Parse()
 
-		c := loadConfig()
-		logger = setupLogging(c, appName)
-		stats = setupStatsD(c.StatsD, appName)
+	//c := loadConfig()
+	logger = setupLogging(*logFormat, *logLevel, appName)
+	stats = setupStatsD(*statsDAddress, appName)
 
-		var err error
-		nc, err = setupNats(c, appName)
-		if err != nil {
-			panic(err)
-		}
-
-		defer nc.Close()
-
-		client := client.NewClient(
-			c.Gateway,
-			stats,
-			logger.Named("gateway-client"),
-		)
-
-			worker := worker.NewNatsWorker(
-				nc,
-				client,
-				stats,
-				logger.Named("event-worker"),
-			)
-			worker.RegisterMessageListeners(c)
-
-		http.DefaultServeMux.HandleFunc("/health", healthCheck)
-		http.ListenAndServe(":9999", nil)
+	http.DefaultServeMux.HandleFunc("/health", healthCheck)
+	http.ListenAndServe(":9999", nil)
 }
 
 func loadConfig() config.Config {
-	data, err := ioutil.ReadFile(*configFile)
+	c, err := config.ParseFolder(*configFolder)
 	if err != nil {
-		log.Fatal("Config file does not exist:", err)
-	}
-
-	c := config.Config{}
-	if err := c.Unmarshal(data); err != nil {
-		log.Fatal("Unable to load config", err)
+		log.Fatal(err)
 	}
 
 	fmt.Printf("Loaded config: %#v\n", c)
@@ -71,15 +47,15 @@ func loadConfig() config.Config {
 	return c
 }
 
-func setupLogging(c config.Config, appName string) hclog.Logger {
+func setupLogging(logFormat, logLevel, appName string) hclog.Logger {
 	logJSON := false
-	if c.LogFormat == "json" {
+	if logFormat == "json" {
 		logJSON = true
 	}
 
 	appLogger := hclog.New(&hclog.LoggerOptions{
 		Name:       appName,
-		Level:      hclog.LevelFromString(c.LogLevel),
+		Level:      hclog.LevelFromString(logLevel),
 		JSONFormat: logJSON,
 	})
 
@@ -96,25 +72,6 @@ func setupStatsD(server, appName string) *statsd.Client {
 	return stats
 }
 
-func setupNats(c config.Config, appName string) (stan.Conn, error) {
-	clientID := fmt.Sprintf("%s-%d", appName, time.Now().UnixNano())
-	nc, err := stan.Connect(c.NatsClusterID, clientID, stan.NatsURL(c.Nats))
-	if err != nil {
-		stats.Incr("connection.nats.failed", nil, 1)
-		logger.Error("Unable to connect to nats server", "error", err)
-	}
-
-	stats.Incr("connection.nats.success", nil, 1)
-
-	return nc, err
-}
-
 func healthCheck(rw http.ResponseWriter, r *http.Request) {
-	if !nc.NatsConn().IsConnected() {
-		stats.Incr("connection.nats.disconnected", nil, 1)
-
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, `{"nats": "not connected"}`)
-	}
+	fmt.Fprint(rw, "Need to implement health checks")
 }
-*/

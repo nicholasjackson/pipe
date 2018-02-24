@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"path"
+	"path/filepath"
 
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
@@ -19,15 +21,49 @@ type Config struct {
 	ConnectionPools map[string]providers.ConnectionPool
 }
 
-func ParseHCLFile(file string) (Config, error) {
-	parser := hclparse.NewParser()
-
-	config := Config{
+func New() Config {
+	return Config{
 		ConnectionPools: make(map[string]providers.ConnectionPool),
 		Inputs:          make(map[string]providers.Provider),
 		Outputs:         make(map[string]providers.Provider),
 		Pipes:           make(map[string]*pipe.Pipe),
 	}
+}
+
+func ParseFolder(folder string) (Config, error) {
+	c := New()
+
+	files, err := filepath.Glob(path.Join(folder, "**/*.hcl"))
+	if err != nil {
+		return c, err
+	}
+
+	for _, f := range files {
+		conf, err := ParseHCLFile(f)
+		if err != nil {
+			return c, err
+		}
+
+		for k, v := range conf.Pipes {
+			c.Pipes[k] = v
+		}
+		for k, v := range conf.Inputs {
+			c.Inputs[k] = v
+		}
+		for k, v := range conf.Outputs {
+			c.Outputs[k] = v
+		}
+		for k, v := range conf.ConnectionPools {
+			c.ConnectionPools[k] = v
+		}
+	}
+
+	return c, nil
+}
+
+func ParseHCLFile(file string) (Config, error) {
+	parser := hclparse.NewParser()
+	config := New()
 
 	f, diag := parser.ParseHCLFile(file)
 	if diag.HasErrors() {
