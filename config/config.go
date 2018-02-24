@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/nicholasjackson/faas-nats/pipe"
 	"github.com/nicholasjackson/faas-nats/providers"
+	"github.com/nicholasjackson/faas-nats/providers/http"
 	nats "github.com/nicholasjackson/faas-nats/providers/nats_io"
 )
 
@@ -43,7 +44,9 @@ func ParseHCLFile(file string) (Config, error) {
 	switch b.Type {
 
 	case "input":
-		if err := processInput(&config, b); err != nil {
+		fallthrough
+	case "output":
+		if err := processBody(&config, b); err != nil {
 			return config, err
 		}
 
@@ -56,7 +59,7 @@ func ParseHCLFile(file string) (Config, error) {
 	return config, nil
 }
 
-func processInput(c *Config, b *hclsyntax.Block) error {
+func processBody(c *Config, b *hclsyntax.Block) error {
 	var i providers.Provider
 
 	switch b.Labels[0] {
@@ -65,13 +68,23 @@ func processInput(c *Config, b *hclsyntax.Block) error {
 		if c.ConnectionPools["nats_queue"] == nil {
 			c.ConnectionPools["nats_queue"] = &nats.StreamingConnectionPool{}
 		}
+	case "http":
+		i = &http.HTTPProvider{}
+		if c.ConnectionPools["http"] == nil {
+			c.ConnectionPools["http"] = &http.HTTPConnectionPool{}
+		}
 	}
 
 	if err := decodeBody(b, i); err != nil {
 		return err
 	}
 
-	c.Inputs[b.Labels[1]] = i
+	switch b.Type {
+	case "input":
+		c.Inputs[b.Labels[1]] = i
+	case "output":
+		c.Outputs[b.Labels[1]] = i
+	}
 
 	return nil
 }

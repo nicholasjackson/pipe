@@ -24,7 +24,7 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 
 	mockedConnection := &ConnectionMock{
 		PublishFunc: func(subj string, data []byte) error {
-			panic("TODO: mock out the Publish method")
+			return nil
 		},
 		QueueSubscribeFunc: func(
 			subject string,
@@ -98,6 +98,16 @@ func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
 	case <-time.After(3 * time.Second):
 		is.Fail() // message received timeout
 	}
+}
+
+func TestSendAddsAMessageToTheOutboundQueue(t *testing.T) {
+	is, p, cm, _ := setupStreamingProvider(t)
+
+	p.Publish([]byte("1233"))
+
+	is.Equal(1, len(cm.PublishCalls()))                 // should have called publish once
+	is.Equal(p.Queue, cm.PublishCalls()[0].Subj)        // should have set the subject
+	is.Equal("1233", string(cm.PublishCalls()[0].Data)) // should have set the payload
 }
 
 func TestStopStopsListeningAndCancelsTheQueue(t *testing.T) {

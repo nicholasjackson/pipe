@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	lockProviderMockListen sync.RWMutex
-	lockProviderMockSetup  sync.RWMutex
-	lockProviderMockStop   sync.RWMutex
-	lockProviderMockType   sync.RWMutex
+	lockProviderMockListen  sync.RWMutex
+	lockProviderMockPublish sync.RWMutex
+	lockProviderMockSetup   sync.RWMutex
+	lockProviderMockStop    sync.RWMutex
+	lockProviderMockType    sync.RWMutex
 )
 
 // ProviderMock is a mock implementation of Provider.
@@ -24,6 +25,9 @@ var (
 //         mockedProvider := &ProviderMock{
 //             ListenFunc: func() (<-chan *Message, error) {
 // 	               panic("TODO: mock out the Listen method")
+//             },
+//             PublishFunc: func(in1 []byte) error {
+// 	               panic("TODO: mock out the Publish method")
 //             },
 //             SetupFunc: func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
 // 	               panic("TODO: mock out the Setup method")
@@ -44,6 +48,9 @@ type ProviderMock struct {
 	// ListenFunc mocks the Listen method.
 	ListenFunc func() (<-chan *Message, error)
 
+	// PublishFunc mocks the Publish method.
+	PublishFunc func(in1 []byte) error
+
 	// SetupFunc mocks the Setup method.
 	SetupFunc func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error
 
@@ -57,6 +64,11 @@ type ProviderMock struct {
 	calls struct {
 		// Listen holds details about calls to the Listen method.
 		Listen []struct {
+		}
+		// Publish holds details about calls to the Publish method.
+		Publish []struct {
+			// In1 is the in1 argument value.
+			In1 []byte
 		}
 		// Setup holds details about calls to the Setup method.
 		Setup []struct {
@@ -99,6 +111,37 @@ func (mock *ProviderMock) ListenCalls() []struct {
 	lockProviderMockListen.RLock()
 	calls = mock.calls.Listen
 	lockProviderMockListen.RUnlock()
+	return calls
+}
+
+// Publish calls PublishFunc.
+func (mock *ProviderMock) Publish(in1 []byte) error {
+	if mock.PublishFunc == nil {
+		panic("moq: ProviderMock.PublishFunc is nil but Provider.Publish was just called")
+	}
+	callInfo := struct {
+		In1 []byte
+	}{
+		In1: in1,
+	}
+	lockProviderMockPublish.Lock()
+	mock.calls.Publish = append(mock.calls.Publish, callInfo)
+	lockProviderMockPublish.Unlock()
+	return mock.PublishFunc(in1)
+}
+
+// PublishCalls gets all the calls that were made to Publish.
+// Check the length with:
+//     len(mockedProvider.PublishCalls())
+func (mock *ProviderMock) PublishCalls() []struct {
+	In1 []byte
+} {
+	var calls []struct {
+		In1 []byte
+	}
+	lockProviderMockPublish.RLock()
+	calls = mock.calls.Publish
+	lockProviderMockPublish.RUnlock()
 	return calls
 }
 

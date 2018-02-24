@@ -28,5 +28,6 @@ type Provider interface {
 	Type() string                                                          // Type returns the type of the provider
 	Setup(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error // Setup to initalize any connection for the provider
 	Listen() (<-chan *Message, error)                                      // Listen for messages
+	Publish([]byte) error                                                  // Publish a message to the outbound provider
 	Stop() error                                                           // Stop listening for messages
 }

@@ -11,28 +11,17 @@ import (
 
 type StreamingProvider struct {
 	Name      string
-	Server    string    `hcl:"server"`
-	ClusterID string    `hcl:"cluster_id"`
-	Queue     string    `hcl:"queue"`
-	AuthBasic AuthBasic `hcl:"auth_basic,block"`
-	AuthMTLS  AuthMTLS  `hcl:"auth_mtls,block"`
+	Server    string               `hcl:"server"`
+	ClusterID string               `hcl:"cluster_id"`
+	Queue     string               `hcl:"queue"`
+	AuthBasic *providers.AuthBasic `hcl:"auth_basic,block"`
+	AuthMTLS  *providers.AuthMTLS  `hcl:"auth_mtls,block"`
 
 	connection   Connection
 	subscription stan.Subscription
 	stats        *statsd.Client
 	logger       hclog.Logger
 	msgChannel   chan *providers.Message
-}
-
-type AuthBasic struct {
-	User     string `hcl:"user"`
-	Password string `hcl:"password"`
-}
-
-type AuthMTLS struct {
-	TLSClientKey    string `hcl:"tls_client_key"`
-	TLSClientCert   string `hcl:"tls_client_cert"`
-	TLSClientCACert string `hcl:"tls_client_cacert"`
 }
 
 func (sp *StreamingProvider) Type() string {
@@ -74,6 +63,11 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 	sp.msgChannel = make(chan *providers.Message)
 
 	return sp.msgChannel, nil
+}
+
+// Publish a message to the configured outbound queue
+func (sp *StreamingProvider) Publish(data []byte) error {
+	return sp.connection.Publish(sp.Queue, data)
 }
 
 func (sp *StreamingProvider) Stop() error {
