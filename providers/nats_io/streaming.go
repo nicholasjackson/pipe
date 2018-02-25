@@ -6,11 +6,11 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	stan "github.com/nats-io/go-nats-streaming"
-	"github.com/nicholasjackson/faas-nats/providers"
+	"github.com/nicholasjackson/pipe/providers"
 )
 
 type StreamingProvider struct {
-	Name      string
+	name      string
 	Server    string               `hcl:"server"`
 	ClusterID string               `hcl:"cluster_id"`
 	Queue     string               `hcl:"queue"`
@@ -26,6 +26,10 @@ type StreamingProvider struct {
 
 func (sp *StreamingProvider) Type() string {
 	return "nats_queue"
+}
+
+func (sp *StreamingProvider) Name() string {
+	return sp.name
 }
 
 func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
@@ -48,7 +52,7 @@ func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Log
 }
 
 func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
-	qGroup := fmt.Sprintf("%s-%s", sp.Queue, sp.Name)
+	qGroup := fmt.Sprintf("%s-%s", sp.Queue, sp.name)
 	subscription, err := sp.connection.QueueSubscribe(sp.Queue, qGroup, sp.messageHandler)
 	if err != nil {
 		sp.stats.Incr("subscription.nats.failed", nil, 1)

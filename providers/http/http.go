@@ -7,11 +7,11 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/nicholasjackson/faas-nats/providers"
+	"github.com/nicholasjackson/pipe/providers"
 )
 
 type HTTPProvider struct {
-	Name      string
+	name      string
 	Protocol  string               `hcl:"protocol,optional"` // default to http
 	Server    string               `hcl:"server"`
 	Port      int                  `hcl:"port,optional"` // default to 80
@@ -25,6 +25,9 @@ type HTTPProvider struct {
 	msgChannel chan *providers.Message
 }
 
+func (sp *HTTPProvider) Name() string {
+	return sp.name
+}
 func (h *HTTPProvider) Type() string {
 	return "http"
 }

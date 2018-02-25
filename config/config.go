@@ -4,14 +4,15 @@ import (
 	"errors"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/hashicorp/hcl2/gohcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclparse"
-	"github.com/nicholasjackson/faas-nats/pipe"
-	"github.com/nicholasjackson/faas-nats/providers"
-	"github.com/nicholasjackson/faas-nats/providers/http"
-	nats "github.com/nicholasjackson/faas-nats/providers/nats_io"
+	"github.com/nicholasjackson/pipe/pipe"
+	"github.com/nicholasjackson/pipe/providers"
+	"github.com/nicholasjackson/pipe/providers/http"
+	nats "github.com/nicholasjackson/pipe/providers/nats_io"
 )
 
 type Config struct {
@@ -131,6 +132,18 @@ func processPipe(c *Config, b *hclsyntax.Block) error {
 	if err := decodeBody(b, &p); err != nil {
 		return err
 	}
+
+	// validate the expiration
+	exp := 48 * time.Hour
+	if p.Expiration != "" {
+		var err error
+		exp, err = time.ParseDuration(p.Expiration)
+		if err != nil {
+			return err
+		}
+	}
+
+	p.ExpirationDuration = exp
 
 	c.Pipes[b.Labels[0]] = &p
 

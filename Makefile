@@ -8,22 +8,22 @@ test:
 	GOMAXPROCS=7 go test -parallel 7 -cover -race ./...
 
 build:
-	go build -o faas-nats .
+	go build -o pipe .
 
 build_linux:
-	CGO_ENABLED=0 GOOS=linux go build -o faas-nats .
+	CGO_ENABLED=0 GOOS=linux go build -o pipe .
 
 build_docker: build_linux
-	docker build -t ${NAMESPACE}/faas-nats:${VERSION} .
-	docker tag ${NAMESPACE}/faas-nats:${VERSION} ${NAMESPACE}/faas-nats:${VERSION}
-	docker tag ${NAMESPACE}/faas-nats:${VERSION} ${NAMESPACE}/faas-nats:latest
+	docker build -t ${NAMESPACE}/pipe:${VERSION} .
+	docker tag ${NAMESPACE}/pipe:${VERSION} ${NAMESPACE}/pipe:${VERSION}
+	docker tag ${NAMESPACE}/pipe:${VERSION} ${NAMESPACE}/pipe:latest
 
 push_docker: 
-	docker push ${NAMESPACE}/faas-nats:${VERSION}
-	docker push ${NAMESPACE}/faas-nats:latest
+	docker push ${NAMESPACE}/pipe:${VERSION}
+	docker push ${NAMESPACE}/pipe:latest
 
 run_docker:
-	docker run -it -v $(shell pwd)/example_config.yml:/etc/faas-nats/example_config.yml ${NAMESPACE}/faas-nats:latest -config /etc/faas-nats/example_config.yml
+	docker run -it -v $(shell pwd)/example_config.yml:/etc/pipe/example_config.yml ${NAMESPACE}/pipe:latest -config /etc/pipe/example_config.yml
 
 build_all:
 	goreleaser -snapshot -rm-dist -skip-validate

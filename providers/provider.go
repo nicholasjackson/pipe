@@ -25,6 +25,7 @@ type ConnectionPool interface {
 
 // Provider defines a generic interface than an input or an output must implement
 type Provider interface {
+	Name() string
 	Type() string                                                          // Type returns the type of the provider
 	Setup(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error // Setup to initalize any connection for the provider
 	Listen() (<-chan *Message, error)                                      // Listen for messages

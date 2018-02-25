@@ -1,7 +1,9 @@
 package pipe
 
 import (
-	"github.com/nicholasjackson/faas-nats/providers"
+	"time"
+
+	"github.com/nicholasjackson/pipe/providers"
 )
 
 type Pipe struct {
@@ -10,7 +12,8 @@ type Pipe struct {
 	Input         string `hcl:"input"`
 	InputProvider providers.Provider
 
-	Expiration string `hcl:"expiration"`
+	Expiration         string `hcl:"expiration"`
+	ExpirationDuration time.Duration
 
 	Action    Action   `hcl:"action,block"`
 	OnSuccess []Action `hcl:"on_success,block"`

@@ -38,7 +38,7 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 	p := &StreamingProvider{
 		connection: mockedConnection,
 		Queue:      "testqueue",
-		Name:       "testprovider",
+		name:       "testprovider",
 	}
 
 	mockedConnectionPool := &ConnectionPoolMock{
@@ -71,7 +71,7 @@ func TestListenRegistersToListenForMessagesOnAQueue(t *testing.T) {
 
 	is.Equal(1, len(cm.QueueSubscribeCalls()))                       // should have subscribed to a queue
 	is.Equal(p.Queue, cm.QueueSubscribeCalls()[0].Subject)           // should have subscribed to queuename
-	is.Equal(p.Queue+"-"+p.Name, cm.QueueSubscribeCalls()[0].Qgroup) // should have created a queuegroup
+	is.Equal(p.Queue+"-"+p.name, cm.QueueSubscribeCalls()[0].Qgroup) // should have created a queuegroup
 }
 
 func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/nicholasjackson/faas-nats/config"
+	"github.com/nicholasjackson/pipe/config"
 )
 
 const appName = "pipe"

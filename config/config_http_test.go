@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"github.com/nicholasjackson/faas-nats/providers/http"
+	"github.com/nicholasjackson/pipe/providers/http"
 )
 
 func TestParsesConfigHTTPProviderHCL(t *testing.T) {

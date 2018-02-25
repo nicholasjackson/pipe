@@ -25,6 +25,14 @@ func TestParsesConfigPipeHCLNoFail(t *testing.T) {
 	is.Equal(0, len(c.Pipes["process_image_fail"].OnFail)) // should have returned 0 fail blocks
 }
 
+func TestParsesConfigPipeAndRetunsErrorWithInvalidExpiration(t *testing.T) {
+	is := is.New(t)
+
+	_, err := ParseHCLFile("../test_fixtures/pipe/invalid_expiration.bad")
+
+	is.True(err != nil) // should have returned an error
+}
+
 func TestParsesConfigPipeHCLNoSuccess(t *testing.T) {
 	is := is.New(t)
 

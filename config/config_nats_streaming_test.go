@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	nats "github.com/nicholasjackson/faas-nats/providers/nats_io"
+	nats "github.com/nicholasjackson/pipe/providers/nats_io"
 )
 
 func TestParsesConfigNatsProviderHCL(t *testing.T) {

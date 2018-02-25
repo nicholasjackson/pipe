@@ -6,8 +6,8 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
-	"github.com/nicholasjackson/faas-nats/pipe"
-	"github.com/nicholasjackson/faas-nats/providers"
+	"github.com/nicholasjackson/pipe/pipe"
+	"github.com/nicholasjackson/pipe/providers"
 )
 
 var testLogger hclog.Logger

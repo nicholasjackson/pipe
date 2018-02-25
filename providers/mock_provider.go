@@ -11,6 +11,7 @@ import (
 
 var (
 	lockProviderMockListen  sync.RWMutex
+	lockProviderMockName    sync.RWMutex
 	lockProviderMockPublish sync.RWMutex
 	lockProviderMockSetup   sync.RWMutex
 	lockProviderMockStop    sync.RWMutex
@@ -25,6 +26,9 @@ var (
 //         mockedProvider := &ProviderMock{
 //             ListenFunc: func() (<-chan *Message, error) {
 // 	               panic("TODO: mock out the Listen method")
+//             },
+//             NameFunc: func() string {
+// 	               panic("TODO: mock out the Name method")
 //             },
 //             PublishFunc: func(in1 []byte) error {
 // 	               panic("TODO: mock out the Publish method")
@@ -48,6 +52,9 @@ type ProviderMock struct {
 	// ListenFunc mocks the Listen method.
 	ListenFunc func() (<-chan *Message, error)
 
+	// NameFunc mocks the Name method.
+	NameFunc func() string
+
 	// PublishFunc mocks the Publish method.
 	PublishFunc func(in1 []byte) error
 
@@ -64,6 +71,9 @@ type ProviderMock struct {
 	calls struct {
 		// Listen holds details about calls to the Listen method.
 		Listen []struct {
+		}
+		// Name holds details about calls to the Name method.
+		Name []struct {
 		}
 		// Publish holds details about calls to the Publish method.
 		Publish []struct {
@@ -111,6 +121,32 @@ func (mock *ProviderMock) ListenCalls() []struct {
 	lockProviderMockListen.RLock()
 	calls = mock.calls.Listen
 	lockProviderMockListen.RUnlock()
+	return calls
+}
+
+// Name calls NameFunc.
+func (mock *ProviderMock) Name() string {
+	if mock.NameFunc == nil {
+		panic("moq: ProviderMock.NameFunc is nil but Provider.Name was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockProviderMockName.Lock()
+	mock.calls.Name = append(mock.calls.Name, callInfo)
+	lockProviderMockName.Unlock()
+	return mock.NameFunc()
+}
+
+// NameCalls gets all the calls that were made to Name.
+// Check the length with:
+//     len(mockedProvider.NameCalls())
+func (mock *ProviderMock) NameCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockProviderMockName.RLock()
+	calls = mock.calls.Name
+	lockProviderMockName.RUnlock()
 	return calls
 }
 

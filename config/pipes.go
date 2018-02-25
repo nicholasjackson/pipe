@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
-	"github.com/nicholasjackson/faas-nats/pipe"
+	"github.com/nicholasjackson/pipe/pipe"
 )
 
 func SetupPipes(c Config, logger hclog.Logger, stats *statsd.Client) map[string]*pipe.Pipe {

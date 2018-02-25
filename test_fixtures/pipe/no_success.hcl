@@ -1,7 +1,7 @@
 pipe "process_image_success" {
   input = "sqs_messages_in"
   // do not process events older than
-  expiration = "1hr" 
+  expiration = "1h" 
 
   // do this when a event triggers
   action {
