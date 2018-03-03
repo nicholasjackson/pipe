@@ -24,6 +24,7 @@ func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, func()) {
 			is.NoErr(err) // expected no error from http body
 
 			serverResponse = d
+			rw.Write([]byte("ok"))
 		}),
 	)
 
@@ -50,8 +51,19 @@ func TestPublishCallsEndpointWithData(t *testing.T) {
 	defer cleanup()
 	payload := []byte("test data")
 
-	err := p.Publish(payload)
+	_, err := p.Publish(payload)
 
 	is.NoErr(err)                     // should not have reuturned an error
 	is.Equal(payload, serverResponse) // should have sent the correct payload
+}
+
+func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
+	is, p, cleanup := setupHTTPProvider(t)
+	defer cleanup()
+	payload := []byte("test data")
+
+	data, err := p.Publish(payload)
+
+	is.NoErr(err)                // should not have reuturned an error
+	is.Equal("ok", string(data)) // should have sent the correct payload
 }

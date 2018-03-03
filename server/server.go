@@ -93,7 +93,47 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 		return
 	}
 
-	pi.Action.OutputProvider.Publish(data)
+	_, err = pi.Action.OutputProvider.Publish(data)
+
+	if err != nil {
+		p.publishFail(pi, m)
+		return
+	}
+
+	p.publishSuccess(pi, m)
+
+}
+
+func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {
+	// process success messages
+	for _, a := range pi.OnSuccess {
+		// transform data if necessary
+		data, err := p.processInputTemplate(a, m.Data)
+		if err != nil {
+			return
+		}
+
+		a.OutputProvider.Publish(data)
+		if err != nil {
+			return
+		}
+	}
+}
+
+func (p *PipeServer) publishFail(pi *pipe.Pipe, m *providers.Message) {
+	// process success messages
+	for _, a := range pi.OnFail {
+		// transform data if necessary
+		data, err := p.processInputTemplate(a, m.Data)
+		if err != nil {
+			return
+		}
+
+		a.OutputProvider.Publish(data)
+		if err != nil {
+			return
+		}
+	}
 }
 
 func (p *PipeServer) processInputTemplate(a pipe.Action, data []byte) ([]byte, error) {

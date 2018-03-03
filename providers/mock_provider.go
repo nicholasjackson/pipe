@@ -30,7 +30,7 @@ var (
 //             NameFunc: func() string {
 // 	               panic("TODO: mock out the Name method")
 //             },
-//             PublishFunc: func(in1 []byte) error {
+//             PublishFunc: func(in1 []byte) ([]byte, error) {
 // 	               panic("TODO: mock out the Publish method")
 //             },
 //             SetupFunc: func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
@@ -56,7 +56,7 @@ type ProviderMock struct {
 	NameFunc func() string
 
 	// PublishFunc mocks the Publish method.
-	PublishFunc func(in1 []byte) error
+	PublishFunc func(in1 []byte) ([]byte, error)
 
 	// SetupFunc mocks the Setup method.
 	SetupFunc func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error
@@ -151,7 +151,7 @@ func (mock *ProviderMock) NameCalls() []struct {
 }
 
 // Publish calls PublishFunc.
-func (mock *ProviderMock) Publish(in1 []byte) error {
+func (mock *ProviderMock) Publish(in1 []byte) ([]byte, error) {
 	if mock.PublishFunc == nil {
 		panic("moq: ProviderMock.PublishFunc is nil but Provider.Publish was just called")
 	}

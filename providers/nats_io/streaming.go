@@ -70,8 +70,8 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 }
 
 // Publish a message to the configured outbound queue
-func (sp *StreamingProvider) Publish(data []byte) error {
-	return sp.connection.Publish(sp.Queue, data)
+func (sp *StreamingProvider) Publish(data []byte) ([]byte, error) {
+	return nil, sp.connection.Publish(sp.Queue, data)
 }
 
 func (sp *StreamingProvider) Stop() error {

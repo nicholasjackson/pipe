@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -43,18 +44,24 @@ func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
 	return nil, nil
 }
 
-func (h *HTTPProvider) Publish(d []byte) error {
+func (h *HTTPProvider) Publish(d []byte) ([]byte, error) {
 	url := fmt.Sprintf("%s://%s:%d%s", h.Protocol, h.Server, h.Port, h.Path)
 	resp, err := http.Post(url, "text/plain", bytes.NewReader(d))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Got error code %d", resp.StatusCode)
+		return nil, fmt.Errorf("Got error code %d", resp.StatusCode)
 	}
 
-	return nil
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, err
 }
 
 func (h *HTTPProvider) Stop() error {

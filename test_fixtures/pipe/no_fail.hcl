@@ -8,7 +8,7 @@ pipe "process_image_fail" {
     output = "api_call"
     template = <<EOF
       {{ print "%s" .Raw }}
-    EOF
+EOF
 
   }
 
@@ -19,7 +19,7 @@ pipe "process_image_fail" {
     // body to the outbound provider
     template = <<EOF
       {{ print "%s" 0.Raw }}
-    EOF
+EOF
 
   }
 
