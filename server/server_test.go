@@ -211,6 +211,23 @@ func TestListenPublishesSuccessEventPostAction(t *testing.T) {
 	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }
 
+func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
+	is, c, p := setup(t, nil)
+	c.Pipes["test_pipe"].OnSuccess = append(c.Pipes["test_pipe"].OnSuccess, c.Pipes["test_pipe"].OnSuccess[0])
+
+	p.Listen()
+	time.Sleep(20 * time.Millisecond) // wait for setup
+
+	inputChan <- &providers.Message{
+		Timestamp: time.Now().UnixNano(),
+		Data:      []byte(`{ "name": "nic" }`),
+	}
+	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
+
+	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
+}
+
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 	is, c, p := setup(t, nil)
 	c.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
@@ -244,6 +261,23 @@ func TestListenPublishesFailEventPostAction(t *testing.T) {
 	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                             // expected 1 call to function
 	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+}
+
+func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
+	is, c, p := setup(t, fmt.Errorf("boom"))
+	c.Pipes["test_pipe"].OnFail = append(c.Pipes["test_pipe"].OnFail, c.Pipes["test_pipe"].OnFail[0])
+
+	p.Listen()
+	time.Sleep(20 * time.Millisecond) // wait for setup
+
+	inputChan <- &providers.Message{
+		Timestamp: time.Now().UnixNano(),
+		Data:      []byte(`{ "name": "nic" }`),
+	}
+	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
+
+	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
 }
 
 func TestListenTransformsFailEventPostAction(t *testing.T) {

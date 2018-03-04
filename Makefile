@@ -27,3 +27,6 @@ run_docker:
 
 build_all:
 	goreleaser -snapshot -rm-dist -skip-validate
+
+test_nats_provider:
+	go test -v test_functional/nats/main_test.go

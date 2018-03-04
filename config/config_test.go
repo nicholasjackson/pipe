@@ -1,10 +1,19 @@
 package config
 
 import (
+	"os"
 	"testing"
 
 	"github.com/matryer/is"
 )
+
+func setTestEnv(key, val string) func() {
+	os.Setenv(key, val)
+
+	return func() {
+		os.Unsetenv(key)
+	}
+}
 
 func TestParsesConfigPipeHCL(t *testing.T) {
 	is := is.New(t)
@@ -52,4 +61,14 @@ func TestParsesFolder(t *testing.T) {
 	is.Equal(3, len(c.Pipes))   // should have returned three pipes
 	is.Equal(2, len(c.Outputs)) // should have returned two output
 	is.Equal(1, len(c.Inputs))  // should have returned one input
+}
+
+func TestParsesConfigContainingEnvironmentVariables(t *testing.T) {
+	is := is.New(t)
+	defer setTestEnv("abc", "123")()
+
+	c, err := ParseHCLFile("../test_fixtures/pipe/interpolation.hcl.env")
+
+	is.NoErr(err)                                 // error should have been nil
+	is.Equal("123", c.Pipes["environment"].Input) // should have set input to 123
 }

@@ -2,18 +2,24 @@ package config
 
 import (
 	"errors"
+	"os"
 	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/hcl2/gohcl"
+	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
 	"github.com/nicholasjackson/pipe/providers/http"
 	nats "github.com/nicholasjackson/pipe/providers/nats_io"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
+
+var ctx *hcl.EvalContext
 
 type Config struct {
 	Inputs          map[string]providers.Provider
@@ -23,12 +29,37 @@ type Config struct {
 }
 
 func New() Config {
+	ctx = buildContext()
+
 	return Config{
 		ConnectionPools: make(map[string]providers.ConnectionPool),
 		Inputs:          make(map[string]providers.Provider),
 		Outputs:         make(map[string]providers.Provider),
 		Pipes:           make(map[string]*pipe.Pipe),
 	}
+}
+
+func buildContext() *hcl.EvalContext {
+	var EnvFunc = function.New(&function.Spec{
+		Params: []function.Parameter{
+			{
+				Name:             "env",
+				Type:             cty.String,
+				AllowDynamicType: true,
+			},
+		},
+		Type: function.StaticReturnType(cty.String),
+		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+			return cty.StringVal(os.Getenv(args[0].AsString())), nil
+		},
+	})
+
+	ctx := &hcl.EvalContext{
+		Functions: map[string]function.Function{},
+	}
+	ctx.Functions["env"] = EnvFunc
+
+	return ctx
 }
 
 func ParseFolder(folder string) (Config, error) {
@@ -151,7 +182,8 @@ func processPipe(c *Config, b *hclsyntax.Block) error {
 }
 
 func decodeBody(b *hclsyntax.Block, p interface{}) error {
-	diag := gohcl.DecodeBody(b.Body, nil, p)
+
+	diag := gohcl.DecodeBody(b.Body, ctx, p)
 	if diag.HasErrors() {
 		return errors.New(diag.Error())
 	}
