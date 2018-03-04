@@ -1,13 +1,13 @@
 input "nats_queue" "nats_messages_in" {
-  server = "nats://localhost:4222"
-  cluster_id = "abc123"
-  queue = "mymessagequeue"
+  server = "nats://${env("nats_server")}:4222"
+  cluster_id = "${env("nats_cluster_id")}"
+  queue = "messagein"
 }
 
 output "nats_queue" "nats_messages_out" {
-  server = "nats://localhost:4222"
-  cluster_id = "abc123"
-  queue = "mymessagequeue"
+  server = "nats://${env("nats_server")}:4222"
+  cluster_id = "${env("nats_cluster_id")}"
+  queue = "messageout"
 }
 
 pipe "test_nats" {

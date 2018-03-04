@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,14 +25,14 @@ var ctx *hcl.EvalContext
 type Config struct {
 	Inputs          map[string]providers.Provider
 	Outputs         map[string]providers.Provider
-	Pipes           map[string]*pipe.Pipe
 	ConnectionPools map[string]providers.ConnectionPool
+	Pipes           map[string]*pipe.Pipe
 }
 
-func New() Config {
+func New() *Config {
 	ctx = buildContext()
 
-	return Config{
+	return &Config{
 		ConnectionPools: make(map[string]providers.ConnectionPool),
 		Inputs:          make(map[string]providers.Provider),
 		Outputs:         make(map[string]providers.Provider),
@@ -62,13 +63,25 @@ func buildContext() *hcl.EvalContext {
 	return ctx
 }
 
-func ParseFolder(folder string) (Config, error) {
+func ParseFolder(folder string) (*Config, error) {
+	abs, _ := filepath.Abs(folder)
 	c := New()
 
-	files, err := filepath.Glob(path.Join(folder, "**/*.hcl"))
+	// current folder
+	files, err := filepath.Glob(path.Join(abs, "*.hcl"))
 	if err != nil {
+		fmt.Println("err")
 		return c, err
 	}
+
+	// sub folders
+	filesDir, err := filepath.Glob(path.Join(abs, "**/*.hcl"))
+	if err != nil {
+		fmt.Println("err")
+		return c, err
+	}
+
+	files = append(files, filesDir...)
 
 	for _, f := range files {
 		conf, err := ParseHCLFile(f)
@@ -93,7 +106,7 @@ func ParseFolder(folder string) (Config, error) {
 	return c, nil
 }
 
-func ParseHCLFile(file string) (Config, error) {
+func ParseHCLFile(file string) (*Config, error) {
 	parser := hclparse.NewParser()
 	config := New()
 
@@ -107,20 +120,20 @@ func ParseHCLFile(file string) (Config, error) {
 		return config, errors.New("Error getting body")
 	}
 
-	b := body.Blocks[0]
+	for _, b := range body.Blocks {
+		switch b.Type {
 
-	switch b.Type {
+		case "input":
+			fallthrough
+		case "output":
+			if err := processBody(config, b); err != nil {
+				return config, err
+			}
 
-	case "input":
-		fallthrough
-	case "output":
-		if err := processBody(&config, b); err != nil {
-			return config, err
-		}
-
-	case "pipe":
-		if err := processPipe(&config, b); err != nil {
-			return config, err
+		case "pipe":
+			if err := processPipe(config, b); err != nil {
+				return config, err
+			}
 		}
 	}
 
@@ -132,9 +145,9 @@ func processBody(c *Config, b *hclsyntax.Block) error {
 
 	switch b.Labels[0] {
 	case "nats_queue":
-		i = &nats.StreamingProvider{}
+		i = nats.NewStreamingProvider(b.Labels[1])
 		if c.ConnectionPools["nats_queue"] == nil {
-			c.ConnectionPools["nats_queue"] = &nats.StreamingConnectionPool{}
+			c.ConnectionPools["nats_queue"] = nats.NewStreamingConnectionPool()
 		}
 	case "http":
 		i = &http.HTTPProvider{}
@@ -175,6 +188,7 @@ func processPipe(c *Config, b *hclsyntax.Block) error {
 	}
 
 	p.ExpirationDuration = exp
+	p.Name = b.Labels[0]
 
 	c.Pipes[b.Labels[0]] = &p
 

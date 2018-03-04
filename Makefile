@@ -29,4 +29,4 @@ build_all:
 	goreleaser -snapshot -rm-dist -skip-validate
 
 test_nats_provider:
-	go test -v test_functional/nats/main_test.go
+	cd test_functional/nats && go test -v ./main_test.go

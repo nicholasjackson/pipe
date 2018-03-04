@@ -12,7 +12,7 @@ type Pipe struct {
 	Input         string `hcl:"input"`
 	InputProvider providers.Provider
 
-	Expiration         string `hcl:"expiration"`
+	Expiration         string `hcl:"expiration,optional"`
 	ExpirationDuration time.Duration
 
 	Action    Action   `hcl:"action,block"`

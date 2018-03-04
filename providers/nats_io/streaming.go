@@ -24,6 +24,10 @@ type StreamingProvider struct {
 	msgChannel   chan *providers.Message
 }
 
+func NewStreamingProvider(name string) *StreamingProvider {
+	return &StreamingProvider{name: name}
+}
+
 func (sp *StreamingProvider) Type() string {
 	return "nats_queue"
 }
@@ -61,7 +65,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 	}
 
 	sp.stats.Incr("subscription.nats.created", nil, 1)
-	sp.logger.Debug("Created subscription for", sp.Queue)
+	sp.logger.Debug("Created subscription for", "queue", sp.Queue)
 	sp.subscription = subscription
 
 	sp.msgChannel = make(chan *providers.Message)
@@ -71,6 +75,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 
 // Publish a message to the configured outbound queue
 func (sp *StreamingProvider) Publish(data []byte) ([]byte, error) {
+	sp.logger.Debug("Publishing message for", "name", sp.name, "subject", sp.Queue)
 	return nil, sp.connection.Publish(sp.Queue, data)
 }
 

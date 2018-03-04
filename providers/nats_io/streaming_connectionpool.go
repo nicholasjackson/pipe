@@ -12,6 +12,12 @@ type StreamingConnectionPool struct {
 	connections map[string]Connection
 }
 
+func NewStreamingConnectionPool() *StreamingConnectionPool {
+	return &StreamingConnectionPool{
+		connections: make(map[string]Connection),
+	}
+}
+
 // GetConnection returns a connection from the pool, if one does not exist it creates it
 func (scp *StreamingConnectionPool) GetConnection(server, clusterID string) (Connection, error) {
 	clientID := fmt.Sprintf("%s-%d", "pipe", time.Now().UnixNano())

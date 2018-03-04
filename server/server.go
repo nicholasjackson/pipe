@@ -13,14 +13,14 @@ import (
 
 // PipeServer is the main server which configures the providers and starts listening for messages
 type PipeServer struct {
-	config config.Config
+	config *config.Config
 	logger hclog.Logger
 	statsd *statsd.Client
 	parser *template.Parser
 }
 
 // New creates a new PipeServer
-func New(c config.Config, l hclog.Logger, s *statsd.Client) *PipeServer {
+func New(c *config.Config, l hclog.Logger, s *statsd.Client) *PipeServer {
 
 	return &PipeServer{
 		config: c,
@@ -59,9 +59,12 @@ func (p *PipeServer) listen(i providers.Provider) {
 	}
 
 	for m := range c {
-		p.logger.Info("recieved message")
+		pipes := p.getPipesByInputProvider(i)
+		if len(pipes) < 1 {
+			p.logger.Info("No pipes configured to handle this message", "provider", i.Name(), "type", i.Type())
+		}
 
-		for _, pi := range p.getPipesByInputProvider(i) {
+		for _, pi := range pipes {
 			p.handleMessage(pi, m)
 		}
 	}
@@ -80,11 +83,14 @@ func (p *PipeServer) getPipesByInputProvider(i providers.Provider) []*pipe.Pipe 
 }
 
 func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
+	p.logger.Info("Recieved message", "pipe", pi.Name)
+
 	// time the length of the message handling
 	defer func(st time.Time) {
 		p.statsd.Timing("handler.message.called", time.Now().Sub(st), []string{"pipe:" + pi.Name}, 1)
 	}(time.Now())
 
+	p.logger.Info("Recieved message", "pipe", pi.Name)
 	// ensure we do not process expired messages
 	if time.Now().Sub(time.Unix(0, m.Timestamp)) > pi.ExpirationDuration {
 		p.logger.Info("Message expired", "pipe", pi.Name, "timestamp", m.Timestamp, "expiration", pi.ExpirationDuration)
@@ -178,7 +184,7 @@ func (p *PipeServer) processOutputTemplate(a pipe.Action, data []byte) ([]byte, 
 
 		p.statsd.Incr("handler.message.template.success", []string{"output:" + a.Output}, 1)
 		p.logger.Debug("Transformed input template", "output", a.Output, "template")
-		return functionData, err
+		return functionData, nil
 	}
 
 	return data, nil

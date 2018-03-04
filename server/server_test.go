@@ -16,7 +16,7 @@ import (
 
 var inputChan chan *providers.Message
 
-func setup(t *testing.T, actionError error) (*is.I, config.Config, *PipeServer) {
+func setup(t *testing.T, actionError error) (*is.I, *config.Config, *PipeServer) {
 	is := is.New(t)
 
 	inputChan = make(chan *providers.Message)

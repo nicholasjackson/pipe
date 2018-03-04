@@ -67,74 +67,96 @@ func setupPipes(t *testing.T) (*is.I, *Config, *providers.ProviderMock) {
 	return is.New(t), c, pm
 }
 
+func TestSetupPipesCallsSetupOnTheOutputProviders(t *testing.T) {
+	is, c, m := setupPipes(t)
+
+	SetupPipes(c, testLogger, testStatsD)
+
+	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
+	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
+}
+
+func TestSetupPipesCallsSetupOnTheInputProviders(t *testing.T) {
+	is, c, m := setupPipes(t)
+
+	SetupPipes(c, testLogger, testStatsD)
+
+	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
+	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
+}
+
 func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c, testLogger, testStatsD)
+	p, err := SetupPipes(c, testLogger, testStatsD)
 
+	is.NoErr(err)
 	is.Equal(1, len(p))                                               // should have created one pipe
 	is.Equal(c.Inputs["test_provider"], p["test_pipe"].InputProvider) // should have set the correct input provider
-}
-
-func TestSetupPipesCallsSetupOnTheInputProvider(t *testing.T) {
-	is, c, m := setupPipes(t)
-
-	_ = SetupPipes(*c, testLogger, testStatsD)
-
-	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
 }
 
 func TestSetupPipesSetsTheCorrectActionOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c, testLogger, testStatsD)
+	p, err := SetupPipes(c, testLogger, testStatsD)
 
+	is.NoErr(err)
 	is.Equal(1, len(p))                                                        // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].Action.OutputProvider) // should have set the correct output provider
-}
-
-func TestSetupPipesCallsSetupOnTheActionOutputProvider(t *testing.T) {
-	is, c, m := setupPipes(t)
-
-	_ = SetupPipes(*c, testLogger, testStatsD)
-
-	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[1].Cp) // should have passed the mock provider
 }
 
 func TestSetupPipesSetsTheCorrectSuccessOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c, testLogger, testStatsD)
+	p, err := SetupPipes(c, testLogger, testStatsD)
 
+	is.NoErr(err)
 	is.Equal(1, len(p))                                                              // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].OnSuccess[0].OutputProvider) // should have set the correct output provider
-}
-
-func TestSetupPipesCallsSetupOnTheSuccessOutputProvider(t *testing.T) {
-	is, c, m := setupPipes(t)
-
-	_ = SetupPipes(*c, testLogger, testStatsD)
-
-	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[2].Cp) // should have passed the mock provider
 }
 
 func TestSetupPipesSetsTheCorrectFailOutputProviderOnThePipe(t *testing.T) {
 	is, c, _ := setupPipes(t)
 
-	p := SetupPipes(*c, testLogger, testStatsD)
+	p, err := SetupPipes(c, testLogger, testStatsD)
 
+	is.NoErr(err)
 	is.Equal(1, len(p))                                                           // should have created one pipe
 	is.Equal(c.Outputs["test_provider"], p["test_pipe"].OnFail[0].OutputProvider) // should have set the correct output provider
 }
 
-func TestSetupPipesCallsSetupOnTheFailOutputProvider(t *testing.T) {
-	is, c, m := setupPipes(t)
+func TestSetupPipesReturnsErrorWhenNoOutputFound(t *testing.T) {
+	is, c, _ := setupPipes(t)
+	c.Outputs = make(map[string]providers.Provider)
 
-	_ = SetupPipes(*c, testLogger, testStatsD)
+	_, err := SetupPipes(c, testLogger, testStatsD)
 
-	is.Equal(4, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[3].Cp) // should have passed the mock provider
+	is.True(err != nil) // should have returned and error
+}
+
+func TestSetupPipesReturnsErrorWhenNoInputFound(t *testing.T) {
+	is, c, _ := setupPipes(t)
+	c.Inputs = make(map[string]providers.Provider)
+
+	_, err := SetupPipes(c, testLogger, testStatsD)
+
+	is.True(err != nil) // should have returned and error
+}
+
+func TestSetupPipesReturnsErrorWhenNoSuccessOutputFound(t *testing.T) {
+	is, c, _ := setupPipes(t)
+	c.Pipes["test_pipe"].OnSuccess[0].Output = "does not exist"
+
+	_, err := SetupPipes(c, testLogger, testStatsD)
+
+	is.True(err != nil) // should have returned and error
+}
+
+func TestSetupPipesReturnsErrorWhenNoFailOutputFound(t *testing.T) {
+	is, c, _ := setupPipes(t)
+	c.Pipes["test_pipe"].OnFail[0].Output = "does not exist"
+
+	_, err := SetupPipes(c, testLogger, testStatsD)
+
+	is.True(err != nil) // should have returned and error
 }

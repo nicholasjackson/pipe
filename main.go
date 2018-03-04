@@ -36,7 +36,7 @@ func main() {
 	http.ListenAndServe(":9999", nil)
 }
 
-func loadConfig() config.Config {
+func loadConfig() *config.Config {
 	c, err := config.ParseFolder(*configFolder)
 	if err != nil {
 		log.Fatal(err)
