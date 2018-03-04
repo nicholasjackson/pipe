@@ -80,43 +80,63 @@ func (p *PipeServer) getPipesByInputProvider(i providers.Provider) []*pipe.Pipe 
 }
 
 func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
+	// time the length of the message handling
+	defer func(st time.Time) {
+		p.statsd.Timing("handler.message.called", time.Now().Sub(st), []string{"pipe:" + pi.Name}, 1)
+	}(time.Now())
+
+	// ensure we do not process expired messages
 	if time.Now().Sub(time.Unix(0, m.Timestamp)) > pi.ExpirationDuration {
-		p.logger.Info("Message expired", "subject", pi.Name, "timestamp", m.Timestamp, "expiration", pi.ExpirationDuration)
+		p.logger.Info("Message expired", "pipe", pi.Name, "timestamp", m.Timestamp, "expiration", pi.ExpirationDuration)
 		p.statsd.Incr("handler.message.expired", []string{"pipe:" + pi.Name}, 1)
 
 		return
 	}
 
 	// transform data if necessary
-	data, err := p.processInputTemplate(pi.Action, m.Data)
+	data, err := p.processOutputTemplate(pi.Action, m.Data)
 	if err != nil {
 		return
 	}
 
-	_, err = pi.Action.OutputProvider.Publish(data)
+	p.logger.Info("Publish message action", "pipe", pi.Name, "output", pi.Action.Output)
+	p.statsd.Incr("handler.message.action.publish", []string{"pipe:" + pi.Name}, 1)
 
+	_, err = pi.Action.OutputProvider.Publish(data)
 	if err != nil {
+		p.logger.Error("Publish message action failed", "pipe", pi.Name, "error", err, "data", data)
+		p.statsd.Incr("handler.message.action.publish.failed", []string{"pipe:" + pi.Name}, 1)
+
 		p.publishFail(pi, m)
 		return
 	}
 
-	p.publishSuccess(pi, m)
+	p.logger.Info("Publish message action succeded", "pipe", pi.Name, "output", pi.Action.Output)
+	p.statsd.Incr("handler.message.action.publish.success", []string{"pipe:" + pi.Name}, 1)
 
+	p.publishSuccess(pi, m)
 }
 
 func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {
 	// process success messages
 	for _, a := range pi.OnSuccess {
 		// transform data if necessary
-		data, err := p.processInputTemplate(a, m.Data)
+		p.logger.Info("Attempt process success action", "pipe", pi.Name, "output", a.Output)
+
+		data, err := p.processOutputTemplate(a, m.Data)
 		if err != nil {
-			return
+			continue
 		}
 
-		a.OutputProvider.Publish(data)
+		_, err = a.OutputProvider.Publish(data)
 		if err != nil {
-			return
+			p.logger.Error("Publish success action failed", "pipe", pi.Name, "output", a.Output, "error", err, "data", data)
+			p.statsd.Incr("handler.message.success.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
+			continue
 		}
+
+		p.logger.Info("Publish success action succeded", "pipe", pi.Name, "output", pi.Action.Output)
+		p.statsd.Incr("handler.message.success.publish.success", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
 	}
 }
 
@@ -124,30 +144,40 @@ func (p *PipeServer) publishFail(pi *pipe.Pipe, m *providers.Message) {
 	// process success messages
 	for _, a := range pi.OnFail {
 		// transform data if necessary
-		data, err := p.processInputTemplate(a, m.Data)
+		p.logger.Info("Attempt process fail action", "pipe", pi.Name, "output", a.Output)
+
+		data, err := p.processOutputTemplate(a, m.Data)
 		if err != nil {
-			return
+			continue
 		}
 
 		a.OutputProvider.Publish(data)
 		if err != nil {
-			return
+			p.logger.Error("Publish success action failed", "pipe", pi.Name, "output", a.Output, "error", err, "data", data)
+			p.statsd.Incr("handler.message.success.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
+			continue
 		}
+
+		p.logger.Info("Publish success action succeded", "pipe", pi.Name, "output", pi.Action.Output)
+		p.statsd.Incr("handler.message.success.publish.success", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
 	}
 }
 
-func (p *PipeServer) processInputTemplate(a pipe.Action, data []byte) ([]byte, error) {
+func (p *PipeServer) processOutputTemplate(a pipe.Action, data []byte) ([]byte, error) {
 	// do we have a transformation template
 	if a.Template != "" {
+		p.logger.Debug("Transform output template", "output", a.Output, "template", a.Template, "data", data)
+
 		functionData, err := p.parser.Parse(a.Template, data)
 		if err != nil {
-			p.logger.Error("Error processing input template", "output", a.Output, "error", err)
-			p.statsd.Incr("handler.error.inputtemplate", []string{"output:" + a.Output}, 1)
+			p.logger.Error("Error processing output template", "output", a.Output, "error", err)
+			p.statsd.Incr("handler.message.template.failed", []string{"output:" + a.Output}, 1)
 
 			return nil, err
 		}
 
-		p.logger.Debug("Transformed input template", "output", a.Output, "template", a.Template, "data", data)
+		p.statsd.Incr("handler.message.template.success", []string{"output:" + a.Output}, 1)
+		p.logger.Debug("Transformed input template", "output", a.Output, "template")
 		return functionData, err
 	}
 
