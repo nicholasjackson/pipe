@@ -90,7 +90,7 @@ func FeatureContext(s *godog.Suite) {
 	s.AfterScenario(func(interface{}, error) {
 		natsClient.Close()
 
-		fmt.Println("Log output:")
+		fmt.Println("\nLog output:")
 		l, _ := ioutil.ReadAll(log)
 		fmt.Println(string(l))
 	})

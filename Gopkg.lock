@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/DATA-DOG/godog"
+  packages = [".","colors","gherkin"]
+  revision = "0997cc8515072a01d907e82b0f543e8bb8f8e72d"
+  version = "v0.7.5"
+
+[[projects]]
   name = "github.com/DataDog/datadog-go"
   packages = ["statsd"]
   revision = "9487d3a9d3be5bf3cf60b86ae810b97926964515"
@@ -36,6 +42,18 @@
   name = "github.com/hashicorp/hcl2"
   packages = ["gohcl","hcl","hcl/hclsyntax","hcl/json","hclparse"]
   revision = "92456935b84870414bc208a88b12d0f99c1a0638"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kr/pretty"
+  packages = ["."]
+  revision = "cfb55aafdaf3ec08f0db22699ab822c50091b1c4"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kr/text"
+  packages = ["."]
+  revision = "7cafcd837844e784b526369c9bce262804aebc60"
 
 [[projects]]
   branch = "master"
@@ -82,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f95b8c7972dd7a1758ca45acd6260e0fadba2b8858675dd658e6dd1112f06c61"
+  inputs-digest = "3b1e9b88bdffa270eb99be3983ee93bd01b02086f8f77d930df57f13d6cfe9ef"
   solver-name = "gps-cdcl"
   solver-version = 1
