@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"time"
@@ -14,16 +16,21 @@ import (
 	"github.com/nicholasjackson/pipe/providers"
 )
 
-var inputChan chan *providers.Message
+type serverTest struct {
+	config     *config.Config
+	pipeServer *PipeServer
+	inputChan  chan *providers.Message
+}
 
-func setup(t *testing.T, actionError error) (*is.I, *config.Config, *PipeServer) {
+func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
 	is := is.New(t)
-
-	inputChan = make(chan *providers.Message)
+	testElements := &serverTest{
+		inputChan: make(chan *providers.Message),
+	}
 
 	mockedInputProvider := &providers.ProviderMock{
 		ListenFunc: func() (<-chan *providers.Message, error) {
-			return inputChan, nil
+			return testElements.inputChan, nil
 		},
 		PublishFunc: func(in1 []byte) ([]byte, error) {
 			return nil, nil
@@ -114,186 +121,186 @@ func setup(t *testing.T, actionError error) (*is.I, *config.Config, *PipeServer)
 	c.ConnectionPools["mock_provider"] = mockedConnectionPool
 
 	s, _ := statsd.New("localhost:8125")
-	p := New(c, hclog.Default(), s)
 
-	return is, c, p
+	lc := hclog.DefaultOptions
+	lc.Level = hclog.Trace
+
+	if os.Getenv("log_debug") != "true" {
+		lc.Output = ioutil.Discard
+	}
+
+	p := New(c, hclog.New(lc), s)
+	testElements.config = c
+	testElements.pipeServer = p
+
+	return is, testElements
 }
 
 func TestListenSetsUpInputProviders(t *testing.T) {
-	is, c, p := setup(t, nil)
+	is, te := setup(t, nil)
 
-	p.Listen()
+	te.pipeServer.Listen()
 
-	input := c.Inputs["mock_input"].(*providers.ProviderMock)
-	is.Equal(1, len(input.SetupCalls()))                                   // should have called setup on the input provider
-	is.Equal(c.ConnectionPools["mock_provider"], input.SetupCalls()[0].Cp) // should have setup the inputs
+	input := te.config.Inputs["mock_input"].(*providers.ProviderMock)
+	is.Equal(1, len(input.SetupCalls()))                                           // should have called setup on the input provider
+	is.Equal(te.config.ConnectionPools["mock_provider"], input.SetupCalls()[0].Cp) // should have setup the inputs
 }
 
 func TestListenSetsUpOutputProviders(t *testing.T) {
-	is, c, p := setup(t, nil)
+	is, te := setup(t, nil)
 
-	p.Listen()
+	te.pipeServer.Listen()
 
-	output := c.Outputs["mock_output"].(*providers.ProviderMock)
-	is.Equal(1, len(output.SetupCalls()))                                   // should have called setup on the inputs provider
-	is.Equal(c.ConnectionPools["mock_provider"], output.SetupCalls()[0].Cp) // should have setup the outputs
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
+	is.Equal(1, len(output.SetupCalls()))                                           // should have called setup on the inputs provider
+	is.Equal(te.config.ConnectionPools["mock_provider"], output.SetupCalls()[0].Cp) // should have setup the outputs
 }
 
 func TestListenListensForInputProviderMessages(t *testing.T) {
-	is, c, p := setup(t, nil)
+	is, te := setup(t, nil)
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	input := c.Inputs["mock_input"].(*providers.ProviderMock)
+	input := te.config.Inputs["mock_input"].(*providers.ProviderMock)
 	is.Equal(1, len(input.ListenCalls())) // should be listening for messages
 }
 
 func TestListenCallsActionWhenMessageReceived(t *testing.T) {
-	is, c, p := setup(t, nil)
+	is, te := setup(t, nil)
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{Timestamp: time.Now().UnixNano()}
+	te.inputChan <- &providers.Message{Timestamp: time.Now().UnixNano()}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_output"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls())) // should send a message to the output
 }
 
 func TestListenIgnoresExpiredMessage(t *testing.T) {
-	is, c, p := setup(t, nil)
-	c.Pipes["test_pipe"].ExpirationDuration = 1 * time.Hour
+	is, te := setup(t, nil)
+	te.config.Pipes["test_pipe"].ExpirationDuration = 1 * time.Hour
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{Timestamp: int64(time.Now().Nanosecond()) - (10 * time.Hour).Nanoseconds()}
+	te.inputChan <- &providers.Message{Timestamp: int64(time.Now().Nanosecond()) - (10 * time.Hour).Nanoseconds()}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_output"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
 	is.Equal(0, len(output.PublishCalls())) // should have ignored the message
 }
 
 func TestListenCallsActionTransformingMessage(t *testing.T) {
-	is, c, p := setup(t, nil)
-	c.Pipes["test_pipe"].Action.Template = `{ "nicsname": "{{ .JSON.name }}" }`
+	is, te := setup(t, nil)
+	te.config.Pipes["test_pipe"].Action.Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_output"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }
 
 func TestListenPublishesSuccessEventPostAction(t *testing.T) {
-	is, c, p := setup(t, nil)
+	is, te := setup(t, nil)
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                             // expected 2 call to function
 	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }
 
 func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
-	is, c, p := setup(t, nil)
-	c.Pipes["test_pipe"].OnSuccess = append(c.Pipes["test_pipe"].OnSuccess, c.Pipes["test_pipe"].OnSuccess[0])
+	is, te := setup(t, nil)
+	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
 }
 
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
-	is, c, p := setup(t, nil)
-	c.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
+	is, te := setup(t, nil)
+	te.config.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }
 
 func TestListenPublishesFailEventPostAction(t *testing.T) {
-	is, c, p := setup(t, fmt.Errorf("boom"))
+	is, te := setup(t, fmt.Errorf("boom"))
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                             // expected 1 call to function
 	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }
 
 func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
-	is, c, p := setup(t, fmt.Errorf("boom"))
-	c.Pipes["test_pipe"].OnFail = append(c.Pipes["test_pipe"].OnFail, c.Pipes["test_pipe"].OnFail[0])
+	is, te := setup(t, fmt.Errorf("boom"))
+	te.config.Pipes["test_pipe"].OnFail = append(te.config.Pipes["test_pipe"].OnFail, te.config.Pipes["test_pipe"].OnFail[0])
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
 }
 
 func TestListenTransformsFailEventPostAction(t *testing.T) {
-	is, c, p := setup(t, fmt.Errorf("boom"))
-	c.Pipes["test_pipe"].OnFail[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
+	is, te := setup(t, fmt.Errorf("boom"))
+	te.config.Pipes["test_pipe"].OnFail[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
-	p.Listen()
-	time.Sleep(20 * time.Millisecond) // wait for setup
+	te.pipeServer.Listen()
 
-	inputChan <- &providers.Message{
+	te.inputChan <- &providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := c.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
 }

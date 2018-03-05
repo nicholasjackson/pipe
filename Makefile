@@ -5,7 +5,7 @@ mocks:
 	go generate ./...
 
 test:
-	GOMAXPROCS=7 go test -parallel 7 -cover -race ./...
+	GOMAXPROCS=7 go test -v -parallel 7 -cover -race `go list ./... | grep -v test_functional`
 
 build:
 	go build -o pipe .

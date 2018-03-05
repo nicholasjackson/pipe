@@ -1,6 +1,7 @@
 package server
 
 import (
+	"sync"
 	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -13,10 +14,11 @@ import (
 
 // PipeServer is the main server which configures the providers and starts listening for messages
 type PipeServer struct {
-	config *config.Config
-	logger hclog.Logger
-	statsd *statsd.Client
-	parser *template.Parser
+	config       *config.Config
+	logger       hclog.Logger
+	statsd       *statsd.Client
+	parser       *template.Parser
+	startupGroup sync.WaitGroup
 }
 
 // New creates a new PipeServer
@@ -32,6 +34,10 @@ func New(c *config.Config, l hclog.Logger, s *statsd.Client) *PipeServer {
 
 // Listen starts listening for messages
 func (p *PipeServer) Listen() {
+	// setup the wait group
+	p.startupGroup = sync.WaitGroup{}
+	p.startupGroup.Add(len(p.config.Inputs))
+
 	for _, i := range p.config.Inputs {
 		i.Setup(p.config.ConnectionPools[i.Type()], p.logger, p.statsd)
 	}
@@ -44,6 +50,9 @@ func (p *PipeServer) Listen() {
 	for _, i := range p.config.Inputs {
 		go p.listen(i)
 	}
+
+	// do not return untill all inputs are listening
+	p.startupGroup.Wait()
 }
 
 // Stop listening for messages and shutdown connections
@@ -57,6 +66,9 @@ func (p *PipeServer) listen(i providers.Provider) {
 		p.logger.Error("Unable to listen for input", err)
 		return
 	}
+
+	// decrement the startup group now this input is listening
+	p.startupGroup.Done()
 
 	for m := range c {
 		pipes := p.getPipesByInputProvider(i)
@@ -90,7 +102,6 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 		p.statsd.Timing("handler.message.called", time.Now().Sub(st), []string{"pipe:" + pi.Name}, 1)
 	}(time.Now())
 
-	p.logger.Info("Recieved message", "pipe", pi.Name)
 	// ensure we do not process expired messages
 	if time.Now().Sub(time.Unix(0, m.Timestamp)) > pi.ExpirationDuration {
 		p.logger.Info("Message expired", "pipe", pi.Name, "timestamp", m.Timestamp, "expiration", pi.ExpirationDuration)
