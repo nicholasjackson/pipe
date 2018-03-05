@@ -15,10 +15,13 @@ jobs:
           name: Run Unit tests
           command: make test
       - run:
-          name: Setup Code Climate test-reporter
+          name: Report code coverage
           command: |
             curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
             chmod +x ./cc-test-reporter
+            make coverage
+            ./cc-test-reporter after-build -t gocov
+
   build:
     docker:
       # specify the version

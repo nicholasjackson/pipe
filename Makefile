@@ -7,6 +7,9 @@ mocks:
 test:
 	GOMAXPROCS=7 go test -v -parallel 7 -cover -race `go list ./... | grep -v test_functional`
 
+coverage:
+	go test -coverprofile c.out `go list ./... | grep -v test_functional`
+
 build:
 	go build -o pipe-server .
 
