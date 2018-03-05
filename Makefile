@@ -32,10 +32,6 @@ build_all:
 	goreleaser -snapshot -rm-dist -skip-validate
 
 test_nats_provider:
-	@docker run -d --name nats -p 4222:4222 nats-streaming:0.7.0-linux > /dev/null
-	@sleep 10
-	@cd test_functional/nats && go test -v ./main_test.go
-	@docker stop nats > /dev/null
-	@docker rm nats > /dev/null
+	./scripts/functional_nats.sh
 
 test_functional: test_nats_provider
