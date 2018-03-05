@@ -8,10 +8,10 @@ test:
 	GOMAXPROCS=7 go test -v -parallel 7 -cover -race `go list ./... | grep -v test_functional`
 
 build:
-	go build -o pipe .
+	go build -o pipe-server .
 
 build_linux:
-	CGO_ENABLED=0 GOOS=linux go build -o pipe .
+	CGO_ENABLED=0 GOOS=linux go build -o pipe-server .
 
 build_docker: build_linux
 	docker build -t ${NAMESPACE}/pipe:${VERSION} .
