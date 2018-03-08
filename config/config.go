@@ -14,8 +14,8 @@ import (
 	"github.com/hashicorp/hcl2/hclparse"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
-	"github.com/nicholasjackson/pipe/providers/http"
 	nats "github.com/nicholasjackson/pipe/providers/nats_io"
+	"github.com/nicholasjackson/pipe/providers/web"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/function"
 )
@@ -150,9 +150,9 @@ func processBody(c *Config, b *hclsyntax.Block) error {
 			c.ConnectionPools["nats_queue"] = nats.NewStreamingConnectionPool()
 		}
 	case "http":
-		i = &http.HTTPProvider{}
+		i = &web.HTTPProvider{}
 		if c.ConnectionPools["http"] == nil {
-			c.ConnectionPools["http"] = &http.HTTPConnectionPool{}
+			c.ConnectionPools["http"] = &web.HTTPConnectionPool{}
 		}
 	}
 

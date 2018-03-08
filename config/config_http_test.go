@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"github.com/nicholasjackson/pipe/providers/http"
+	"github.com/nicholasjackson/pipe/providers/web"
 )
 
 func TestParsesConfigHTTPProviderHCL(t *testing.T) {
@@ -15,7 +15,7 @@ func TestParsesConfigHTTPProviderHCL(t *testing.T) {
 	is.NoErr(err)               // error should have been nil
 	is.Equal(1, len(c.Outputs)) // should have returned one input provider
 
-	p, ok := c.Outputs["open_faas"].(*http.HTTPProvider)
+	p, ok := c.Outputs["open_faas"].(*web.HTTPProvider)
 
 	is.True(ok)
 	is.Equal("http", p.Protocol)        // should have set the protocol

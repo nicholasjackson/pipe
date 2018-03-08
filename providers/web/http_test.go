@@ -1,4 +1,4 @@
-package http
+package web
 
 import (
 	"io/ioutil"
@@ -66,4 +66,9 @@ func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
 
 	is.NoErr(err)                // should not have reuturned an error
 	is.Equal("ok", string(data)) // should have sent the correct payload
+}
+
+func TestSetupGetsAConnectionFromTheConnectionPool(t *testing.T) {
+	//	is, p, cleanup := setupHTTPProvider(t)
+	//	defer cleanup()
 }

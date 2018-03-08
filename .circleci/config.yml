@@ -41,7 +41,9 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: make test_nats_provider
+      - run: 
+					name: Run functional tests for Nats.io provider
+					command: make test_nats_provider
 
 workflows:
   version: 2
