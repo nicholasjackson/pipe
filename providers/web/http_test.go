@@ -1,12 +1,15 @@
 package web
 
 import (
+	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
@@ -15,7 +18,7 @@ import (
 
 var serverResponse []byte
 
-func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, func()) {
+func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, *ConnectionMock, func()) {
 	is := is.New(t)
 
 	httptest := httptest.NewServer(
@@ -31,6 +34,27 @@ func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, func()) {
 	u, _ := url.Parse(httptest.URL)
 	port, _ := strconv.Atoi(u.Port())
 
+	mockedConnection := &ConnectionMock{
+		AddrFunc: func() string {
+			panic("TODO: mock out the Addr method")
+		},
+		ListenAndServeFunc: func() error {
+			panic("TODO: mock out the ListenAndServe method")
+		},
+		ListenPathFunc: func(path string, method string, handler http.HandlerFunc) error {
+			return nil
+		},
+		ShutdownFunc: func(ctx context.Context) {
+			panic("TODO: mock out the Shutdown method")
+		},
+	}
+
+	mockedConnectionPool := &ConnectionPoolMock{
+		GetConnectionFunc: func(server string, port int) (Connection, error) {
+			return mockedConnection, nil
+		},
+	}
+
 	p := &HTTPProvider{
 		Protocol: u.Scheme,
 		Server:   u.Hostname(),
@@ -39,15 +63,17 @@ func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, func()) {
 	}
 
 	stats, _ := statsd.New("http://localhost:8125")
-	p.Setup(nil, hclog.Default(), stats)
+	p.Setup(mockedConnectionPool, hclog.Default(), stats)
 
-	return is, p, func() {
+	is.Equal(1, len(mockedConnectionPool.GetConnectionCalls())) // should have retrieved a connection from the connection pool
+
+	return is, p, mockedConnection, func() {
 		httptest.Close()
 	}
 }
 
 func TestPublishCallsEndpointWithData(t *testing.T) {
-	is, p, cleanup := setupHTTPProvider(t)
+	is, p, _, cleanup := setupHTTPProvider(t)
 	defer cleanup()
 	payload := []byte("test data")
 
@@ -58,7 +84,7 @@ func TestPublishCallsEndpointWithData(t *testing.T) {
 }
 
 func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
-	is, p, cleanup := setupHTTPProvider(t)
+	is, p, _, cleanup := setupHTTPProvider(t)
 	defer cleanup()
 	payload := []byte("test data")
 
@@ -68,7 +94,27 @@ func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
 	is.Equal("ok", string(data)) // should have sent the correct payload
 }
 
-func TestSetupGetsAConnectionFromTheConnectionPool(t *testing.T) {
-	//	is, p, cleanup := setupHTTPProvider(t)
-	//	defer cleanup()
+func TestListenReturnsEvents(t *testing.T) {
+	is, p, mc, cleanup := setupHTTPProvider(t)
+	defer cleanup()
+
+	msgs, err := p.Listen()
+	is.NoErr(err) // should not have returned an error
+
+	go func() {
+		rw := httptest.NewRecorder()
+		r := httptest.NewRequest("GET", "/", bytes.NewBuffer([]byte("abc")))
+		h := mc.ListenPathCalls()[0].Handler
+		h.ServeHTTP(rw, r)
+	}()
+
+	select {
+	case m := <-msgs:
+		is.Equal("abc", string(m.Data))                    // message data should be equal
+		is.Equal(false, m.Redelivered)                     // message should have redelivered set
+		is.Equal(uint64(1), m.Sequence)                    // message should have sequence set
+		is.True(time.Now().UnixNano()-m.Timestamp < 10000) // message should have timestamp set
+	case <-time.After(3 * time.Second):
+		is.Fail() // message received timeout
+	}
 }

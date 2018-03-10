@@ -4,7 +4,6 @@
 package web
 
 import (
-	"net/http"
 	"sync"
 )
 
@@ -18,7 +17,7 @@ var (
 //
 //         // make and configure a mocked ConnectionPool
 //         mockedConnectionPool := &ConnectionPoolMock{
-//             GetConnectionFunc: func(server string, port string) (*http.Server, error) {
+//             GetConnectionFunc: func(bindAddr string, port int) (Connection, error) {
 // 	               panic("TODO: mock out the GetConnection method")
 //             },
 //         }
@@ -29,48 +28,48 @@ var (
 //     }
 type ConnectionPoolMock struct {
 	// GetConnectionFunc mocks the GetConnection method.
-	GetConnectionFunc func(server string, port string) (*http.Server, error)
+	GetConnectionFunc func(bindAddr string, port int) (Connection, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// GetConnection holds details about calls to the GetConnection method.
 		GetConnection []struct {
-			// Server is the server argument value.
-			Server string
+			// BindAddr is the bindAddr argument value.
+			BindAddr string
 			// Port is the port argument value.
-			Port string
+			Port int
 		}
 	}
 }
 
 // GetConnection calls GetConnectionFunc.
-func (mock *ConnectionPoolMock) GetConnection(server string, port string) (*http.Server, error) {
+func (mock *ConnectionPoolMock) GetConnection(bindAddr string, port int) (Connection, error) {
 	if mock.GetConnectionFunc == nil {
 		panic("moq: ConnectionPoolMock.GetConnectionFunc is nil but ConnectionPool.GetConnection was just called")
 	}
 	callInfo := struct {
-		Server string
-		Port   string
+		BindAddr string
+		Port     int
 	}{
-		Server: server,
-		Port:   port,
+		BindAddr: bindAddr,
+		Port:     port,
 	}
 	lockConnectionPoolMockGetConnection.Lock()
 	mock.calls.GetConnection = append(mock.calls.GetConnection, callInfo)
 	lockConnectionPoolMockGetConnection.Unlock()
-	return mock.GetConnectionFunc(server, port)
+	return mock.GetConnectionFunc(bindAddr, port)
 }
 
 // GetConnectionCalls gets all the calls that were made to GetConnection.
 // Check the length with:
 //     len(mockedConnectionPool.GetConnectionCalls())
 func (mock *ConnectionPoolMock) GetConnectionCalls() []struct {
-	Server string
-	Port   string
+	BindAddr string
+	Port     int
 } {
 	var calls []struct {
-		Server string
-		Port   string
+		BindAddr string
+		Port     int
 	}
 	lockConnectionPoolMockGetConnection.RLock()
 	calls = mock.calls.GetConnection
