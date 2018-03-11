@@ -1,13 +1,9 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
   test:
     docker:
       # specify the version
       - image: circleci/golang:1.10
-      
     working_directory: /go/src/github.com/nicholasjackson/pipe
     steps:
       - checkout
@@ -26,33 +22,49 @@ jobs:
     docker:
       # specify the version
       - image: circleci/golang:1.10
-      
     working_directory: /go/src/github.com/nicholasjackson/pipe
     steps:
       - checkout
       - run: make build
   
-  providertest_nats:
+  nats_providertest:
     docker:
       # specify the version
       - image: circleci/golang:1.10
-      
+    working_directory: /go/src/github.com/nicholasjackson/pipe
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run functional tests for Nats.io provider
+          command: make test_nats_provider
+  
+  http_providertest:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10
     working_directory: /go/src/github.com/nicholasjackson/pipe
     steps:
       - checkout
       - setup_remote_docker
       - run: 
-					name: Run functional tests for Nats.io provider
-					command: make test_nats_provider
+          name: Run functional tests for HTTP provider
+          command: make test_http_provider
 
 workflows:
   version: 2
   pipe:
     jobs:
       - test
+
       - build:
           requires:
             - test
-      - providertest_nats:
+
+      - nats_providertest:
+          requires:
+            - build
+
+      - http_providertest:
           requires:
             - build

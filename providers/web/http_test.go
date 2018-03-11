@@ -136,10 +136,10 @@ func TestListenReturnsEvents(t *testing.T) {
 
 	select {
 	case m := <-msgs:
-		is.Equal("abc", string(m.Data))                    // message data should be equal
-		is.Equal(false, m.Redelivered)                     // message should have redelivered set
-		is.Equal(uint64(1), m.Sequence)                    // message should have sequence set
-		is.True(time.Now().UnixNano()-m.Timestamp < 10000) // message should have timestamp set
+		is.Equal("abc", string(m.Data))                     // message data should be equal
+		is.Equal(false, m.Redelivered)                      // message should have redelivered set
+		is.Equal(uint64(1), m.Sequence)                     // message should have sequence set
+		is.True(time.Now().UnixNano()-m.Timestamp < 100000) // message should have timestamp set
 	case <-time.After(3 * time.Second):
 		is.Fail() // message received timeout
 	}
