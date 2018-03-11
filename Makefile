@@ -34,4 +34,7 @@ build_all:
 test_nats_provider:
 	./scripts/functional_nats.sh
 
-test_functional: test_nats_provider
+test_http_provider:
+	./scripts/functional_http.sh
+
+test_functional: test_nats_provider test_http_provider

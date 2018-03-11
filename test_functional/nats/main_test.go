@@ -22,25 +22,7 @@ var log *bytes.Buffer
 
 func TestMain(m *testing.M) {
 	myMessageChannel = make(chan *stan.Msg, 1)
-	format := "progress"
-	for _, arg := range os.Args[1:] {
-		if arg == "-test.v=true" { // go test transforms -v option
-			format = "pretty"
-			break
-		}
-	}
-	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
-		godog.SuiteContext(s)
-		FeatureContext(s)
-	}, godog.Options{
-		Format: format,
-		Paths:  []string{"features"},
-	})
-
-	if st := m.Run(); st > status {
-		status = st
-	}
-	os.Exit(status)
+	helpers.MainTest(m, FeatureContext)
 }
 
 func natsIsRunning() error {
@@ -60,7 +42,7 @@ func iExpectAActionMessageToBePublished() error {
 		return fmt.Errorf("Timeout waiting for message")
 	}
 
-	return godog.ErrUndefined
+	return nil
 }
 
 func FeatureContext(s *godog.Suite) {

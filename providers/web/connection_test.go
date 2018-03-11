@@ -60,3 +60,15 @@ func TestConnectionNotListensToGetMethodWhenMethodPost(t *testing.T) {
 	is.NoErr(err)           // calling endpoint should not return an error
 	is.Equal(false, called) // should not have called the handler
 }
+
+func TestConnectionCreatesHealthHandler(t *testing.T) {
+	is, _, cleanup := setupHTTPConnection(t)
+	defer cleanup()
+
+	httpC := http.DefaultClient
+	httpC.Timeout = 1 * time.Second
+	resp, err := httpC.Post("http://localhost:18999/_health", "text/plain", bytes.NewBuffer([]byte{}))
+
+	is.NoErr(err)                            // calling endpoint should not return an error
+	is.Equal(http.StatusOK, resp.StatusCode) // should have retuend status 200 for health
+}

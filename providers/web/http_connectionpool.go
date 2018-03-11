@@ -2,6 +2,8 @@ package web
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 )
 
 //go:generate moq -out mock_connection_pool.go . ConnectionPool
@@ -25,8 +27,34 @@ func (h *HTTPConnectionPool) GetConnection(bindAddr string, port int) (Connectio
 	}
 
 	s := NewHTTPConnection(bindAddr, port)
+	errChan := make(chan error)
+	startedChan := make(chan bool)
 
-	go s.ListenAndServe()
+	// need to see if returns an error
+	go func() {
+		err := s.ListenAndServe()
+		errChan <- err
+	}()
 
-	return s, nil
+	go func() {
+		var lastError error
+		for try := 0; try < 10; try++ {
+			resp, err := http.Get(fmt.Sprintf("http://%s:%d/_health", bindAddr, port))
+			if err == nil && resp.StatusCode == http.StatusOK {
+				startedChan <- true
+				return
+			}
+
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		errChan <- fmt.Errorf("Error starting server: %s", lastError.Error())
+	}()
+
+	select {
+	case e := <-errChan:
+		return nil, e
+	case <-startedChan:
+		return s, nil
+	}
 }

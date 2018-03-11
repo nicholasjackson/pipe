@@ -14,6 +14,7 @@ import (
 
 type HTTPProvider struct {
 	name      string
+	direction string
 	Protocol  string               `hcl:"protocol,optional"` // default to http
 	Server    string               `hcl:"server"`
 	Port      int                  `hcl:"port,optional"` // default to 80
@@ -28,36 +29,69 @@ type HTTPProvider struct {
 	msgChannel chan *providers.Message
 }
 
+func NewHTTPProvider(name string, direction string) *HTTPProvider {
+	return &HTTPProvider{name: name, direction: direction}
+}
+
 func (sp *HTTPProvider) Name() string {
 	return sp.name
 }
+
 func (h *HTTPProvider) Type() string {
 	return "http"
+}
+
+func (h *HTTPProvider) Direction() string {
+	return h.direction
 }
 
 func (h *HTTPProvider) Setup(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
 	h.stats = stats
 	h.logger = log
-	h.msgChannel = make(chan *providers.Message, 1)
 
+	if h.direction == providers.DirectionOutput {
+		return nil
+	}
+
+	h.msgChannel = make(chan *providers.Message, 1)
 	pool := cp.(ConnectionPool)
 	c, err := pool.GetConnection(h.Server, h.Port)
 	if err != nil {
+		h.stats.Incr("connection.http.failed", nil, 1)
+		h.logger.Error("Unable to create http server", "error", err)
 		return err
 	}
 
+	h.stats.Incr("connection.http.created", nil, 1)
+	h.logger.Info("Created http connection for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
 	h.connection = c
 
 	return nil
 }
 
 func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
+	if h.direction == providers.DirectionOutput {
+		return nil, nil
+	}
+
 	err := h.connection.ListenPath(h.Path, "GET", h.messageHandler)
+
+	if err != nil {
+		h.stats.Incr("listen.http.failed", nil, 1)
+		h.logger.Error("Failed to create http listener for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
+		return nil, err
+	}
+
+	h.stats.Incr("listen.http.created", nil, 1)
+	h.logger.Debug("Created http listener for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
 
 	return h.msgChannel, err
 }
 
 func (h *HTTPProvider) Publish(d []byte) ([]byte, error) {
+	h.logger.Debug("Publishing message for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
+	h.stats.Incr("publish.http.call", nil, 1)
+
 	url := fmt.Sprintf("%s://%s:%d%s", h.Protocol, h.Server, h.Port, h.Path)
 	resp, err := http.Post(url, "text/plain", bytes.NewReader(d))
 	if err != nil {

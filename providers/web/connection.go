@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,6 +24,8 @@ type HTTPConnection struct {
 
 func NewHTTPConnection(bindAddr string, port int) Connection {
 	r := mux.NewRouter()
+	r.HandleFunc("/_health", healthHandler)
+
 	s := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", bindAddr, port),
 		Handler: r,
@@ -50,4 +53,9 @@ func (h *HTTPConnection) ListenPath(path string, method string, handler http.Han
 
 func (h *HTTPConnection) Shutdown(ctx context.Context) {
 	h.server.Shutdown(ctx)
+}
+
+func healthHandler(rw http.ResponseWriter, r *http.Request) {
+	ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 }

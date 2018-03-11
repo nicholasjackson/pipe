@@ -145,15 +145,17 @@ func processBody(c *Config, b *hclsyntax.Block) error {
 
 	switch b.Labels[0] {
 	case "nats_queue":
-		i = nats.NewStreamingProvider(b.Labels[1])
+		i = nats.NewStreamingProvider(b.Labels[1], b.Type)
 		if c.ConnectionPools["nats_queue"] == nil {
 			c.ConnectionPools["nats_queue"] = nats.NewStreamingConnectionPool()
 		}
 	case "http":
-		i = &web.HTTPProvider{}
+		i = web.NewHTTPProvider(b.Labels[1], b.Type)
 		if c.ConnectionPools["http"] == nil {
 			c.ConnectionPools["http"] = &web.HTTPConnectionPool{}
 		}
+	default:
+		return fmt.Errorf("Provider %s, is not a known provider", b.Labels[0])
 	}
 
 	if err := decodeBody(b, i); err != nil {
@@ -196,7 +198,6 @@ func processPipe(c *Config, b *hclsyntax.Block) error {
 }
 
 func decodeBody(b *hclsyntax.Block, p interface{}) error {
-
 	diag := gohcl.DecodeBody(b.Body, ctx, p)
 	if diag.HasErrors() {
 		return errors.New(diag.Error())

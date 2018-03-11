@@ -14,11 +14,12 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
+	"github.com/nicholasjackson/pipe/providers"
 )
 
 var serverResponse []byte
 
-func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, *ConnectionMock, func()) {
+func setupHTTPProvider(t *testing.T, direction string) (*is.I, *HTTPProvider, *ConnectionMock, *ConnectionPoolMock, func()) {
 	is := is.New(t)
 
 	httptest := httptest.NewServer(
@@ -56,24 +57,37 @@ func setupHTTPProvider(t *testing.T) (*is.I, *HTTPProvider, *ConnectionMock, fun
 	}
 
 	p := &HTTPProvider{
-		Protocol: u.Scheme,
-		Server:   u.Hostname(),
-		Port:     port,
-		Path:     u.Path,
+		direction: direction,
+		Protocol:  u.Scheme,
+		Server:    u.Hostname(),
+		Port:      port,
+		Path:      u.Path,
 	}
 
 	stats, _ := statsd.New("http://localhost:8125")
 	p.Setup(mockedConnectionPool, hclog.Default(), stats)
 
-	is.Equal(1, len(mockedConnectionPool.GetConnectionCalls())) // should have retrieved a connection from the connection pool
-
-	return is, p, mockedConnection, func() {
+	return is, p, mockedConnection, mockedConnectionPool, func() {
 		httptest.Close()
 	}
 }
 
+func TestSetupWithInboundTypeDoesGetsConnection(t *testing.T) {
+	is, _, _, mcp, cleanup := setupHTTPProvider(t, providers.DirectionInput)
+	defer cleanup()
+
+	is.Equal(1, len(mcp.GetConnectionCalls())) // should have retrieved a connection from the connection pool
+}
+
+func TestSetupWithOutboundTypeDoesNotGetConnection(t *testing.T) {
+	is, _, _, mcp, cleanup := setupHTTPProvider(t, providers.DirectionOutput)
+	defer cleanup()
+
+	is.Equal(0, len(mcp.GetConnectionCalls())) // should not have retrieved a connection from the connection pool
+}
+
 func TestPublishCallsEndpointWithData(t *testing.T) {
-	is, p, _, cleanup := setupHTTPProvider(t)
+	is, p, _, _, cleanup := setupHTTPProvider(t, providers.DirectionInput)
 	defer cleanup()
 	payload := []byte("test data")
 
@@ -84,7 +98,7 @@ func TestPublishCallsEndpointWithData(t *testing.T) {
 }
 
 func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
-	is, p, _, cleanup := setupHTTPProvider(t)
+	is, p, _, _, cleanup := setupHTTPProvider(t, providers.DirectionInput)
 	defer cleanup()
 	payload := []byte("test data")
 
@@ -94,8 +108,20 @@ func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
 	is.Equal("ok", string(data)) // should have sent the correct payload
 }
 
+func TestListenWithOutboundTypeDoesNotCallListenPath(t *testing.T) {
+	is, p, mc, _, cleanup := setupHTTPProvider(t, providers.DirectionOutput)
+	p.direction = "output"
+	defer cleanup()
+
+	msgs, err := p.Listen()
+	is.NoErr(err)        // should not have returned an error
+	is.True(msgs == nil) // should have returned a nil message channel
+
+	is.Equal(0, len(mc.ListenPathCalls())) // should not call listen path for output providers
+}
+
 func TestListenReturnsEvents(t *testing.T) {
-	is, p, mc, cleanup := setupHTTPProvider(t)
+	is, p, mc, _, cleanup := setupHTTPProvider(t, providers.DirectionInput)
 	defer cleanup()
 
 	msgs, err := p.Listen()

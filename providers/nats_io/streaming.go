@@ -11,6 +11,8 @@ import (
 
 type StreamingProvider struct {
 	name      string
+	direction string
+
 	Server    string               `hcl:"server"`
 	ClusterID string               `hcl:"cluster_id"`
 	Queue     string               `hcl:"queue"`
@@ -24,8 +26,8 @@ type StreamingProvider struct {
 	msgChannel   chan *providers.Message
 }
 
-func NewStreamingProvider(name string) *StreamingProvider {
-	return &StreamingProvider{name: name}
+func NewStreamingProvider(name, direction string) *StreamingProvider {
+	return &StreamingProvider{name: name, direction: direction}
 }
 
 func (sp *StreamingProvider) Type() string {
@@ -36,6 +38,10 @@ func (sp *StreamingProvider) Name() string {
 	return sp.name
 }
 
+func (sp *StreamingProvider) Direction() string {
+	return sp.direction
+}
+
 func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
 	pool := cp.(ConnectionPool)
 
@@ -43,6 +49,7 @@ func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Log
 	if err != nil {
 		stats.Incr("connection.nats.failed", nil, 1)
 		logger.Error("Unable to connect to nats server", "error", err)
+		return err
 	}
 
 	stats.Incr("connection.nats.created", nil, 1)
@@ -76,6 +83,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 // Publish a message to the configured outbound queue
 func (sp *StreamingProvider) Publish(data []byte) ([]byte, error) {
 	sp.logger.Debug("Publishing message for", "name", sp.name, "subject", sp.Queue)
+	sp.stats.Incr("publish.nats.call", nil, 1)
 	return nil, sp.connection.Publish(sp.Queue, data)
 }
 

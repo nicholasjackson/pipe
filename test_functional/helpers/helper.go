@@ -3,7 +3,10 @@ package helpers
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"testing"
 
+	"github.com/DATA-DOG/godog"
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/kr/pretty"
@@ -36,4 +39,26 @@ func StartServer(configFolder string) (*server.PipeServer, *bytes.Buffer, error)
 	s.Listen()
 
 	return s, buff, nil
+}
+
+func MainTest(m *testing.M, context func(s *godog.Suite)) {
+	format := "progress"
+	for _, arg := range os.Args[1:] {
+		if arg == "-test.v=true" { // go test transforms -v option
+			format = "pretty"
+			break
+		}
+	}
+	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
+		godog.SuiteContext(s)
+		context(s)
+	}, godog.Options{
+		Format: format,
+		Paths:  []string{"features"},
+	})
+
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
 }

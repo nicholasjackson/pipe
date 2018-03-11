@@ -10,12 +10,13 @@ import (
 )
 
 var (
-	lockProviderMockListen  sync.RWMutex
-	lockProviderMockName    sync.RWMutex
-	lockProviderMockPublish sync.RWMutex
-	lockProviderMockSetup   sync.RWMutex
-	lockProviderMockStop    sync.RWMutex
-	lockProviderMockType    sync.RWMutex
+	lockProviderMockDirection sync.RWMutex
+	lockProviderMockListen    sync.RWMutex
+	lockProviderMockName      sync.RWMutex
+	lockProviderMockPublish   sync.RWMutex
+	lockProviderMockSetup     sync.RWMutex
+	lockProviderMockStop      sync.RWMutex
+	lockProviderMockType      sync.RWMutex
 )
 
 // ProviderMock is a mock implementation of Provider.
@@ -24,6 +25,9 @@ var (
 //
 //         // make and configure a mocked Provider
 //         mockedProvider := &ProviderMock{
+//             DirectionFunc: func() string {
+// 	               panic("TODO: mock out the Direction method")
+//             },
 //             ListenFunc: func() (<-chan *Message, error) {
 // 	               panic("TODO: mock out the Listen method")
 //             },
@@ -49,6 +53,9 @@ var (
 //
 //     }
 type ProviderMock struct {
+	// DirectionFunc mocks the Direction method.
+	DirectionFunc func() string
+
 	// ListenFunc mocks the Listen method.
 	ListenFunc func() (<-chan *Message, error)
 
@@ -69,6 +76,9 @@ type ProviderMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// Direction holds details about calls to the Direction method.
+		Direction []struct {
+		}
 		// Listen holds details about calls to the Listen method.
 		Listen []struct {
 		}
@@ -96,6 +106,32 @@ type ProviderMock struct {
 		Type []struct {
 		}
 	}
+}
+
+// Direction calls DirectionFunc.
+func (mock *ProviderMock) Direction() string {
+	if mock.DirectionFunc == nil {
+		panic("moq: ProviderMock.DirectionFunc is nil but Provider.Direction was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockProviderMockDirection.Lock()
+	mock.calls.Direction = append(mock.calls.Direction, callInfo)
+	lockProviderMockDirection.Unlock()
+	return mock.DirectionFunc()
+}
+
+// DirectionCalls gets all the calls that were made to Direction.
+// Check the length with:
+//     len(mockedProvider.DirectionCalls())
+func (mock *ProviderMock) DirectionCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockProviderMockDirection.RLock()
+	calls = mock.calls.Direction
+	lockProviderMockDirection.RUnlock()
+	return calls
 }
 
 // Listen calls ListenFunc.
