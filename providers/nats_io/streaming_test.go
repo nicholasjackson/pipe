@@ -8,9 +8,10 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	stan "github.com/nats-io/go-nats-streaming"
+	"github.com/nicholasjackson/pipe/providers"
 )
 
-func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *ConnectionMock, *SubscriptionMock) {
+func setupStreamingProvider(t *testing.T, direction string) (*is.I, *StreamingProvider, *ConnectionMock, *SubscriptionMock, *ConnectionPoolMock) {
 	is := is.New(t)
 
 	mockedSubscription := &SubscriptionMock{
@@ -36,9 +37,9 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 	}
 
 	p := &StreamingProvider{
-		connection: mockedConnection,
-		Queue:      "testqueue",
-		name:       "testprovider",
+		direction: direction,
+		Queue:     "testqueue",
+		name:      "testprovider",
 	}
 
 	mockedConnectionPool := &ConnectionPoolMock{
@@ -50,23 +51,23 @@ func setupStreamingProvider(t *testing.T) (*is.I, *StreamingProvider, *Connectio
 	stats, _ := statsd.New("http://localhost:8125")
 	p.Setup(mockedConnectionPool, hclog.Default(), stats)
 
-	return is, p, mockedConnection, mockedSubscription
+	return is, p, mockedConnection, mockedSubscription, mockedConnectionPool
 }
 
 func TestTypeEqualsNatsQueue(t *testing.T) {
-	is, p, _, _ := setupStreamingProvider(t)
+	is, p, _, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 
 	is.Equal("nats_queue", p.Type())
 }
 
-func TestAssignsConnectionFromPool(t *testing.T) {
-	is, p, cm, _ := setupStreamingProvider(t)
+func TestAssignsConnectionFromPoolOnSetup(t *testing.T) {
+	is, p, cm, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 
 	is.Equal(p.connection, cm) // should have set the connection to the connection mock
 }
 
 func TestListenRegistersToListenForMessagesOnAQueue(t *testing.T) {
-	is, p, cm, _ := setupStreamingProvider(t)
+	is, p, cm, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 	p.Listen()
 
 	is.Equal(1, len(cm.QueueSubscribeCalls()))                       // should have subscribed to a queue
@@ -74,8 +75,15 @@ func TestListenRegistersToListenForMessagesOnAQueue(t *testing.T) {
 	is.Equal(p.Queue+"-"+p.name, cm.QueueSubscribeCalls()[0].Qgroup) // should have created a queuegroup
 }
 
+func TestDoesNotListenRegistersToListenForMessagesOnAQueueWhenOutput(t *testing.T) {
+	is, p, cm, _, _ := setupStreamingProvider(t, providers.DirectionOutput)
+	p.Listen()
+
+	is.Equal(0, len(cm.QueueSubscribeCalls())) // should have subscribed to a queue
+}
+
 func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
-	is, p, _, _ := setupStreamingProvider(t)
+	is, p, _, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 	msgs, err := p.Listen()
 
 	is.NoErr(err)
@@ -101,7 +109,7 @@ func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
 }
 
 func TestSendAddsAMessageToTheOutboundQueue(t *testing.T) {
-	is, p, cm, _ := setupStreamingProvider(t)
+	is, p, cm, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 
 	p.Publish([]byte("1233"))
 
@@ -111,7 +119,7 @@ func TestSendAddsAMessageToTheOutboundQueue(t *testing.T) {
 }
 
 func TestStopStopsListeningAndCancelsTheQueue(t *testing.T) {
-	is, p, _, ms := setupStreamingProvider(t)
+	is, p, _, ms, _ := setupStreamingProvider(t, providers.DirectionInput)
 	p.Listen()
 	p.Stop()
 

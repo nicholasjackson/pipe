@@ -49,6 +49,7 @@ func (h *HTTPProvider) Setup(cp providers.ConnectionPool, log hclog.Logger, stat
 	h.stats = stats
 	h.logger = log
 
+	// do not get a connection from the pool if this is an output provider
 	if h.direction == providers.DirectionOutput {
 		return nil
 	}
@@ -70,6 +71,7 @@ func (h *HTTPProvider) Setup(cp providers.ConnectionPool, log hclog.Logger, stat
 }
 
 func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
+	// do not listen if this is an ouput provider
 	if h.direction == providers.DirectionOutput {
 		return nil, nil
 	}

@@ -63,6 +63,11 @@ func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Log
 }
 
 func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
+	// only listen if this is an input provider
+	if sp.direction == providers.DirectionOutput {
+		return nil, nil
+	}
+
 	qGroup := fmt.Sprintf("%s-%s", sp.Queue, sp.name)
 	subscription, err := sp.connection.QueueSubscribe(sp.Queue, qGroup, sp.messageHandler)
 	if err != nil {
