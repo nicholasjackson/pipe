@@ -34,7 +34,7 @@ var (
 //             NameFunc: func() string {
 // 	               panic("TODO: mock out the Name method")
 //             },
-//             PublishFunc: func(in1 []byte) ([]byte, error) {
+//             PublishFunc: func(in1 Message) (Message, error) {
 // 	               panic("TODO: mock out the Publish method")
 //             },
 //             SetupFunc: func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
@@ -63,7 +63,7 @@ type ProviderMock struct {
 	NameFunc func() string
 
 	// PublishFunc mocks the Publish method.
-	PublishFunc func(in1 []byte) ([]byte, error)
+	PublishFunc func(in1 Message) (Message, error)
 
 	// SetupFunc mocks the Setup method.
 	SetupFunc func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error
@@ -88,7 +88,7 @@ type ProviderMock struct {
 		// Publish holds details about calls to the Publish method.
 		Publish []struct {
 			// In1 is the in1 argument value.
-			In1 []byte
+			In1 Message
 		}
 		// Setup holds details about calls to the Setup method.
 		Setup []struct {
@@ -187,12 +187,12 @@ func (mock *ProviderMock) NameCalls() []struct {
 }
 
 // Publish calls PublishFunc.
-func (mock *ProviderMock) Publish(in1 []byte) ([]byte, error) {
+func (mock *ProviderMock) Publish(in1 Message) (Message, error) {
 	if mock.PublishFunc == nil {
 		panic("moq: ProviderMock.PublishFunc is nil but Provider.Publish was just called")
 	}
 	callInfo := struct {
-		In1 []byte
+		In1 Message
 	}{
 		In1: in1,
 	}
@@ -206,10 +206,10 @@ func (mock *ProviderMock) Publish(in1 []byte) ([]byte, error) {
 // Check the length with:
 //     len(mockedProvider.PublishCalls())
 func (mock *ProviderMock) PublishCalls() []struct {
-	In1 []byte
+	In1 Message
 } {
 	var calls []struct {
-		In1 []byte
+		In1 Message
 	}
 	lockProviderMockPublish.RLock()
 	calls = mock.calls.Publish

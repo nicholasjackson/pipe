@@ -90,27 +90,27 @@ func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
 	return h.msgChannel, err
 }
 
-func (h *HTTPProvider) Publish(d []byte) ([]byte, error) {
-	h.logger.Debug("Publishing message for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
+func (h *HTTPProvider) Publish(msg providers.Message) (providers.Message, error) {
+	h.logger.Debug("Publishing message", "id", msg.ID, "parentid", msg.ParentID, "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
 	h.stats.Incr("publish.http.call", nil, 1)
 
 	url := fmt.Sprintf("%s://%s:%d%s", h.Protocol, h.Server, h.Port, h.Path)
-	resp, err := http.Post(url, "text/plain", bytes.NewReader(d))
+	resp, err := http.Post(url, "text/plain", bytes.NewReader(msg.Data))
 	if err != nil {
-		return nil, err
+		return providers.Message{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Got error code %d", resp.StatusCode)
+		return providers.Message{}, fmt.Errorf("Got error code %d", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return providers.Message{}, err
 	}
 
-	return data, err
+	return providers.Message{Data: data}, err
 }
 
 func (h *HTTPProvider) Stop() error {

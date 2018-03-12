@@ -115,11 +115,12 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 	if err != nil {
 		return
 	}
+	msg := providers.Message{Data: data}
 
 	p.logger.Info("Publish message action", "pipe", pi.Name, "output", pi.Action.Output)
 	p.statsd.Incr("handler.message.action.publish", []string{"pipe:" + pi.Name}, 1)
 
-	_, err = pi.Action.OutputProvider.Publish(data)
+	_, err = pi.Action.OutputProvider.Publish(msg)
 	if err != nil {
 		p.logger.Error("Publish message action failed", "pipe", pi.Name, "error", err, "data", data)
 		p.statsd.Incr("handler.message.action.publish.failed", []string{"pipe:" + pi.Name}, 1)
@@ -144,8 +145,9 @@ func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {
 		if err != nil {
 			continue
 		}
+		msg := providers.Message{Data: data}
 
-		_, err = a.OutputProvider.Publish(data)
+		_, err = a.OutputProvider.Publish(msg)
 		if err != nil {
 			p.logger.Error("Publish success action failed", "pipe", pi.Name, "output", a.Output, "error", err, "data", data)
 			p.statsd.Incr("handler.message.success.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
@@ -167,8 +169,9 @@ func (p *PipeServer) publishFail(pi *pipe.Pipe, m *providers.Message) {
 		if err != nil {
 			continue
 		}
+		msg := providers.Message{Data: data}
 
-		a.OutputProvider.Publish(data)
+		a.OutputProvider.Publish(msg)
 		if err != nil {
 			p.logger.Error("Publish success action failed", "pipe", pi.Name, "output", a.Output, "error", err, "data", data)
 			p.statsd.Incr("handler.message.success.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)

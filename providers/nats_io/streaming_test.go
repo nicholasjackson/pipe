@@ -103,6 +103,7 @@ func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
 		is.True(m.Redelivered)                // message should have redelivered set
 		is.Equal(uint64(1), m.Sequence)       // message should have sequence set
 		is.Equal(int64(1234141), m.Timestamp) // message should have timestamp set
+		is.True(len(m.ID) > 1)                // should have set the message id
 	case <-time.After(3 * time.Second):
 		is.Fail() // message received timeout
 	}
@@ -111,7 +112,8 @@ func TestNewMessagesOnAQueueAddMessageToTheListenChannel(t *testing.T) {
 func TestSendAddsAMessageToTheOutboundQueue(t *testing.T) {
 	is, p, cm, _, _ := setupStreamingProvider(t, providers.DirectionInput)
 
-	p.Publish([]byte("1233"))
+	msg := providers.Message{Data: []byte("1233")}
+	p.Publish(msg)
 
 	is.Equal(1, len(cm.PublishCalls()))                 // should have called publish once
 	is.Equal(p.Queue, cm.PublishCalls()[0].Subj)        // should have set the subject

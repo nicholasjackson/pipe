@@ -86,10 +86,10 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 }
 
 // Publish a message to the configured outbound queue
-func (sp *StreamingProvider) Publish(data []byte) ([]byte, error) {
-	sp.logger.Debug("Publishing message for", "name", sp.name, "subject", sp.Queue)
+func (sp *StreamingProvider) Publish(msg providers.Message) (providers.Message, error) {
+	sp.logger.Debug("Publishing message", "id", msg.ID, "parentid", msg.ParentID, "name", sp.name, "subject", sp.Queue)
 	sp.stats.Incr("publish.nats.call", nil, 1)
-	return nil, sp.connection.Publish(sp.Queue, data)
+	return providers.Message{}, sp.connection.Publish(sp.Queue, msg.Data)
 }
 
 func (sp *StreamingProvider) Stop() error {

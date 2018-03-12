@@ -32,8 +32,8 @@ func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
 		ListenFunc: func() (<-chan *providers.Message, error) {
 			return testElements.inputChan, nil
 		},
-		PublishFunc: func(in1 []byte) ([]byte, error) {
-			return nil, nil
+		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
+			return providers.Message{}, nil
 		},
 		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
 			return nil
@@ -53,8 +53,8 @@ func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
 		ListenFunc: func() (<-chan *providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
-		PublishFunc: func(in1 []byte) ([]byte, error) {
-			return nil, actionError
+		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
+			return providers.Message{}, actionError
 		},
 		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
 			return nil
@@ -71,8 +71,8 @@ func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
 		ListenFunc: func() (<-chan *providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
-		PublishFunc: func(in1 []byte) ([]byte, error) {
-			return nil, nil
+		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
+			return providers.Message{}, nil
 		},
 		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
 			return nil
@@ -203,8 +203,8 @@ func TestListenCallsActionTransformingMessage(t *testing.T) {
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
-	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
-	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+	is.Equal(1, len(output.PublishCalls()))                                      // expected 1 call to function
+	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
 }
 
 func TestListenPublishesSuccessEventPostAction(t *testing.T) {
@@ -219,8 +219,8 @@ func TestListenPublishesSuccessEventPostAction(t *testing.T) {
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(1, len(output.PublishCalls()))                             // expected 2 call to function
-	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+	is.Equal(1, len(output.PublishCalls()))                                  // expected 2 call to function
+	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
 }
 
 func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
@@ -239,6 +239,22 @@ func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
 	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
 }
 
+func TestListenSetsParentIDForSuccessMessages(t *testing.T) {
+	is, te := setup(t, nil)
+	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
+
+	te.pipeServer.Listen()
+
+	te.inputChan <- &providers.Message{
+		Timestamp: time.Now().UnixNano(),
+		Data:      []byte(`{ "name": "nic" }`),
+	}
+	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
+
+	//output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	is.Equal(false, true) // not implemented
+}
+
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 	is, te := setup(t, nil)
 	te.config.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
@@ -252,8 +268,8 @@ func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
-	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+	is.Equal(1, len(output.PublishCalls()))                                      // expected 1 call to function
+	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
 }
 
 func TestListenPublishesFailEventPostAction(t *testing.T) {
@@ -268,8 +284,8 @@ func TestListenPublishesFailEventPostAction(t *testing.T) {
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(1, len(output.PublishCalls()))                             // expected 1 call to function
-	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+	is.Equal(1, len(output.PublishCalls()))                                  // expected 1 call to function
+	is.Equal(`{ "name": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
 }
 
 func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
@@ -301,6 +317,6 @@ func TestListenTransformsFailEventPostAction(t *testing.T) {
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(1, len(output.PublishCalls()))                                 // expected 1 call to function
-	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1)) // expected processed payload to be passed
+	is.Equal(1, len(output.PublishCalls()))                                      // expected 1 call to function
+	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
 }
