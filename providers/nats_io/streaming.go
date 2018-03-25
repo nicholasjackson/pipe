@@ -100,11 +100,12 @@ func (sp *StreamingProvider) Stop() error {
 }
 
 func (sp *StreamingProvider) messageHandler(msg *stan.Msg) {
-	m := &providers.Message{}
+	m := providers.NewMessage()
+
 	m.Data = msg.Data
 	m.Redelivered = msg.Redelivered
 	m.Timestamp = msg.Timestamp
 	m.Sequence = msg.Sequence
 
-	sp.msgChannel <- m
+	sp.msgChannel <- &m
 }

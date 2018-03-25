@@ -12,12 +12,21 @@ type Message struct {
 	Data []byte
 	// ContentType for the message if known
 	ContentType string
-	// Timestamp for the message
+	// Timestamp for the message nanoseconds since 1970
 	Timestamp int64
 	// Redelivered is set if this message is a re-delivery
 	Redelivered bool
 	// Sequence number for the message
 	Sequence uint64
+	// Metadata contains miscellanious information information
+	Metadata map[string]string
+}
+
+func NewMessage() Message {
+	return Message{
+		ID:       generateRandomMessageID(),
+		Metadata: make(map[string]string),
+	}
 }
 
 // Ack acknowledged receipt and processing of a message
@@ -30,8 +39,8 @@ func (m *Message) Copy() Message {
 	return *m
 }
 
-// GenerateRandomMessageID generates a random UUID to spec RFC 4122
-func GenerateRandomMessageID() string {
+// generateRandomMessageID generates a random UUID to spec RFC 4122
+func generateRandomMessageID() string {
 	u, err := uuid.NewUUID()
 	if err != nil {
 		panic(err) // this should not occur, panic as we have no handling for this

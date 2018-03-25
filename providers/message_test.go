@@ -9,19 +9,19 @@ import (
 func TestGenerateMessageID(t *testing.T) {
 	is := is.New(t)
 
-	id1 := GenerateRandomMessageID()
+	m1 := NewMessage()
 
-	is.True(id1 != "")     // id should not be empty
-	is.Equal(16, len(id1)) // id should be 16 characters long
+	is.True(m1.ID != "")     // id should not be empty
+	is.Equal(36, len(m1.ID)) // id should be 36 characters long
 }
 
 func TestGenerateRandomMessageID(t *testing.T) {
 	is := is.New(t)
 
-	id1 := GenerateRandomMessageID()
-	id2 := GenerateRandomMessageID()
+	m1 := NewMessage()
+	m2 := NewMessage()
 
-	is.True(id1 != id2) // id1 should not be equal to id2
+	is.True(m1.ID != m2.ID) // id1 should not be equal to id2
 }
 
 func TestCopyDuplicatesAMessage(t *testing.T) {

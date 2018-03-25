@@ -115,7 +115,9 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 	if err != nil {
 		return
 	}
-	msg := providers.Message{Data: data}
+	msg := providers.NewMessage()
+	msg.Data = data
+	msg.ParentID = m.ID
 
 	p.logger.Info("Publish message action", "pipe", pi.Name, "output", pi.Action.Output)
 	p.statsd.Incr("handler.message.action.publish", []string{"pipe:" + pi.Name}, 1)
@@ -145,7 +147,9 @@ func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {
 		if err != nil {
 			continue
 		}
-		msg := providers.Message{Data: data}
+		msg := providers.NewMessage()
+		msg.ParentID = m.ID
+		msg.Data = data
 
 		_, err = a.OutputProvider.Publish(msg)
 		if err != nil {
@@ -169,7 +173,9 @@ func (p *PipeServer) publishFail(pi *pipe.Pipe, m *providers.Message) {
 		if err != nil {
 			continue
 		}
-		msg := providers.Message{Data: data}
+		msg := providers.NewMessage()
+		msg.ParentID = m.ID
+		msg.Data = data
 
 		a.OutputProvider.Publish(msg)
 		if err != nil {

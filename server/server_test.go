@@ -177,6 +177,22 @@ func TestListenCallsActionWhenMessageReceived(t *testing.T) {
 	is.Equal(1, len(output.PublishCalls())) // should send a message to the output
 }
 
+func TestListenSetsParentIDForActionMessages(t *testing.T) {
+	is, te := setup(t, nil)
+
+	te.pipeServer.Listen()
+
+	m := providers.NewMessage()
+	m.Timestamp = time.Now().UnixNano()
+	m.Data = []byte(`{ "name": "nic" }`)
+
+	te.inputChan <- &m
+	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
+
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
+	is.Equal(m.ID, output.PublishCalls()[0].In1.ParentID) // should set the parent id when sending success
+}
+
 func TestListenIgnoresExpiredMessage(t *testing.T) {
 	is, te := setup(t, nil)
 	te.config.Pipes["test_pipe"].ExpirationDuration = 1 * time.Hour
@@ -245,14 +261,15 @@ func TestListenSetsParentIDForSuccessMessages(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
-		Timestamp: time.Now().UnixNano(),
-		Data:      []byte(`{ "name": "nic" }`),
-	}
+	m := providers.NewMessage()
+	m.Timestamp = time.Now().UnixNano()
+	m.Data = []byte(`{ "name": "nic" }`)
+
+	te.inputChan <- &m
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	//output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(false, true) // not implemented
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	is.Equal(m.ID, output.PublishCalls()[0].In1.ParentID) // should set the parent id when sending success
 }
 
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
@@ -319,4 +336,21 @@ func TestListenTransformsFailEventPostAction(t *testing.T) {
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 	is.Equal(1, len(output.PublishCalls()))                                      // expected 1 call to function
 	is.Equal(`{ "nicsname": "nic" }`, string(output.PublishCalls()[0].In1.Data)) // expected processed payload to be passed
+}
+
+func TestListenSetsParentIDForFailMessages(t *testing.T) {
+	is, te := setup(t, fmt.Errorf("boom"))
+	te.config.Pipes["test_pipe"].OnFail = append(te.config.Pipes["test_pipe"].OnFail, te.config.Pipes["test_pipe"].OnFail[0])
+
+	te.pipeServer.Listen()
+
+	m := providers.NewMessage()
+	m.Timestamp = time.Now().UnixNano()
+	m.Data = []byte(`{ "name": "nic" }`)
+
+	te.inputChan <- &m
+	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
+
+	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
+	is.Equal(m.ID, output.PublishCalls()[0].In1.ParentID) // should set the parent id when sending success
 }

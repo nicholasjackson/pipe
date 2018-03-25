@@ -118,13 +118,14 @@ func (h *HTTPProvider) Stop() error {
 }
 
 func (h *HTTPProvider) messageHandler(rw http.ResponseWriter, r *http.Request) {
-	m := providers.Message{}
+	m := providers.NewMessage()
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		panic(err)
 	}
 
+	m.ContentType = r.Header.Get("content-type")
 	m.Data = data
 	m.Redelivered = false
 	m.Sequence = 1

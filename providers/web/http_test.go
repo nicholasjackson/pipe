@@ -93,8 +93,8 @@ func TestPublishCallsEndpointWithData(t *testing.T) {
 
 	_, err := p.Publish(payload)
 
-	is.NoErr(err)                     // should not have reuturned an error
-	is.Equal(payload, serverResponse) // should have sent the correct payload
+	is.NoErr(err)                                          // should not have reuturned an error
+	is.Equal(string(payload.Data), string(serverResponse)) // should have sent the correct payload
 }
 
 func TestPublishCallsEndpointAndReturnsBody(t *testing.T) {
@@ -124,12 +124,15 @@ func TestListenReturnsEvents(t *testing.T) {
 	is, p, mc, _, cleanup := setupHTTPProvider(t, providers.DirectionInput)
 	defer cleanup()
 
+	contentType := "application/json"
 	msgs, err := p.Listen()
 	is.NoErr(err) // should not have returned an error
 
 	go func() {
 		rw := httptest.NewRecorder()
-		r := httptest.NewRequest("GET", "/", bytes.NewBuffer([]byte("abc")))
+		r := httptest.NewRequest("POST", "/", bytes.NewBuffer([]byte("abc")))
+		r.Header.Set("content-type", contentType)
+
 		h := mc.ListenPathCalls()[0].Handler
 		h.ServeHTTP(rw, r)
 	}()
@@ -141,6 +144,7 @@ func TestListenReturnsEvents(t *testing.T) {
 		is.Equal(uint64(1), m.Sequence)                     // message should have sequence set
 		is.True(time.Now().UnixNano()-m.Timestamp < 100000) // message should have timestamp set
 		is.True(len(m.ID) > 1)                              // message should have a message id
+		is.Equal(m.ContentType, contentType)                // message should have content type
 	case <-time.After(3 * time.Second):
 		is.Fail() // message received timeout
 	}
