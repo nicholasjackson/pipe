@@ -11,6 +11,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/kr/pretty"
 	"github.com/nicholasjackson/pipe/config"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/server"
 )
 
@@ -35,7 +36,8 @@ func StartServer(configFolder string) (*server.PipeServer, *bytes.Buffer, error)
 
 	c.Pipes, _ = config.SetupPipes(c, l, stats)
 
-	s := server.New(c, l, stats)
+	logger := logger.New(l, stats)
+	s := server.New(c, logger)
 	s.Listen()
 
 	return s, buff, nil

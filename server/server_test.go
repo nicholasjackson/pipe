@@ -2,134 +2,58 @@ package server
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"time"
 
-	"github.com/DataDog/datadog-go/statsd"
-	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	"github.com/nicholasjackson/pipe/config"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
 )
 
-type serverTest struct {
-	config     *config.Config
-	pipeServer *PipeServer
-	inputChan  chan *providers.Message
-}
-
-func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
+func setup(t *testing.T) (*is.I, *serverTest) {
 	is := is.New(t)
+
 	testElements := &serverTest{
 		inputChan: make(chan *providers.Message),
 	}
-
-	mockedInputProvider := &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
-			return testElements.inputChan, nil
-		},
-		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, nil
-		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
-			return nil
-		},
-		StopFunc: func() error {
-			panic("TODO: mock out the Stop method")
-		},
-		TypeFunc: func() string {
-			return "mock_provider"
-		},
-		NameFunc: func() string {
-			return "mock_input"
-		},
-	}
-
-	mockedOutputProvider := &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
-			panic("TODO: mock out the Listen method")
-		},
-		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, actionError
-		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
-			return nil
-		},
-		StopFunc: func() error {
-			panic("TODO: mock out the Stop method")
-		},
-		TypeFunc: func() string {
-			return "mock_provider"
-		},
-	}
-
-	mockedSuccessFailProvider := &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
-			panic("TODO: mock out the Listen method")
-		},
-		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, nil
-		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
-			return nil
-		},
-		StopFunc: func() error {
-			panic("TODO: mock out the Stop method")
-		},
-		TypeFunc: func() string {
-			return "mock_provider"
-		},
-	}
-
-	mockedConnectionPool := &providers.ConnectionPoolMock{}
+	m := createMocks(testElements)
 
 	pipe := pipe.Pipe{
 		Name:               "test_pipe",
 		Input:              "mock_input",
-		InputProvider:      mockedInputProvider,
+		InputProvider:      m.mockedInputProvider,
 		Expiration:         "5s",
 		ExpirationDuration: 5 * time.Second,
 
 		Action: pipe.Action{
 			Output:         "mock_output",
-			OutputProvider: mockedOutputProvider,
+			OutputProvider: m.mockedOutputProvider,
 		},
 
 		OnSuccess: []pipe.Action{
 			pipe.Action{
 				Output:         "mock_success",
-				OutputProvider: mockedSuccessFailProvider,
+				OutputProvider: m.mockedSuccessFailProvider,
 			},
 		},
 		OnFail: []pipe.Action{
 			pipe.Action{
 				Output:         "mock_fail",
-				OutputProvider: mockedSuccessFailProvider,
+				OutputProvider: m.mockedSuccessFailProvider,
 			},
 		},
 	}
 
 	c := config.New()
-	c.Outputs["mock_output"] = mockedOutputProvider
-	c.Outputs["mock_success_fail"] = mockedSuccessFailProvider
-	c.Inputs["mock_input"] = mockedInputProvider
+	c.Outputs["mock_output"] = m.mockedOutputProvider
+	c.Outputs["mock_success_fail"] = m.mockedSuccessFailProvider
+	c.Inputs["mock_input"] = m.mockedInputProvider
 	c.Pipes["test_pipe"] = &pipe
-	c.ConnectionPools["mock_provider"] = mockedConnectionPool
+	c.ConnectionPools["mock_provider"] = m.mockedConnectionPool
 
-	s, _ := statsd.New("localhost:8125")
-
-	lc := hclog.DefaultOptions
-	lc.Level = hclog.Trace
-
-	if os.Getenv("log_debug") != "true" {
-		lc.Output = ioutil.Discard
-	}
-
-	p := New(c, hclog.New(lc), s)
+	p := New(c, m.mockedLogger)
 	testElements.config = c
 	testElements.pipeServer = p
 
@@ -137,7 +61,7 @@ func setup(t *testing.T, actionError error) (*is.I, *serverTest) {
 }
 
 func TestListenSetsUpInputProviders(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -147,7 +71,7 @@ func TestListenSetsUpInputProviders(t *testing.T) {
 }
 
 func TestListenSetsUpOutputProviders(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -157,7 +81,7 @@ func TestListenSetsUpOutputProviders(t *testing.T) {
 }
 
 func TestListenListensForInputProviderMessages(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -166,7 +90,7 @@ func TestListenListensForInputProviderMessages(t *testing.T) {
 }
 
 func TestListenCallsActionWhenMessageReceived(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -178,7 +102,7 @@ func TestListenCallsActionWhenMessageReceived(t *testing.T) {
 }
 
 func TestListenSetsParentIDForActionMessages(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -194,7 +118,7 @@ func TestListenSetsParentIDForActionMessages(t *testing.T) {
 }
 
 func TestListenIgnoresExpiredMessage(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 	te.config.Pipes["test_pipe"].ExpirationDuration = 1 * time.Hour
 
 	te.pipeServer.Listen()
@@ -207,7 +131,7 @@ func TestListenIgnoresExpiredMessage(t *testing.T) {
 }
 
 func TestListenCallsActionTransformingMessage(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 	te.config.Pipes["test_pipe"].Action.Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
 	te.pipeServer.Listen()
@@ -224,7 +148,7 @@ func TestListenCallsActionTransformingMessage(t *testing.T) {
 }
 
 func TestListenPublishesSuccessEventPostAction(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 
 	te.pipeServer.Listen()
 
@@ -240,7 +164,7 @@ func TestListenPublishesSuccessEventPostAction(t *testing.T) {
 }
 
 func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
 
 	te.pipeServer.Listen()
@@ -256,7 +180,7 @@ func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
 }
 
 func TestListenSetsParentIDForSuccessMessages(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
 
 	te.pipeServer.Listen()
@@ -273,7 +197,7 @@ func TestListenSetsParentIDForSuccessMessages(t *testing.T) {
 }
 
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
-	is, te := setup(t, nil)
+	is, te := setup(t)
 	te.config.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
 	te.pipeServer.Listen()
@@ -290,7 +214,10 @@ func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 }
 
 func TestListenPublishesFailEventPostAction(t *testing.T) {
-	is, te := setup(t, fmt.Errorf("boom"))
+	is, te := setup(t)
+	te.mockedOutputProvider.PublishFunc = func(in1 providers.Message) (providers.Message, error) {
+		return providers.Message{}, fmt.Errorf("boom")
+	}
 
 	te.pipeServer.Listen()
 
@@ -306,7 +233,10 @@ func TestListenPublishesFailEventPostAction(t *testing.T) {
 }
 
 func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
-	is, te := setup(t, fmt.Errorf("boom"))
+	is, te := setup(t)
+	te.mockedOutputProvider.PublishFunc = func(in1 providers.Message) (providers.Message, error) {
+		return providers.Message{}, fmt.Errorf("boom")
+	}
 	te.config.Pipes["test_pipe"].OnFail = append(te.config.Pipes["test_pipe"].OnFail, te.config.Pipes["test_pipe"].OnFail[0])
 
 	te.pipeServer.Listen()
@@ -322,7 +252,10 @@ func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
 }
 
 func TestListenTransformsFailEventPostAction(t *testing.T) {
-	is, te := setup(t, fmt.Errorf("boom"))
+	is, te := setup(t)
+	te.mockedOutputProvider.PublishFunc = func(in1 providers.Message) (providers.Message, error) {
+		return providers.Message{}, fmt.Errorf("boom")
+	}
 	te.config.Pipes["test_pipe"].OnFail[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
 
 	te.pipeServer.Listen()
@@ -339,7 +272,10 @@ func TestListenTransformsFailEventPostAction(t *testing.T) {
 }
 
 func TestListenSetsParentIDForFailMessages(t *testing.T) {
-	is, te := setup(t, fmt.Errorf("boom"))
+	is, te := setup(t)
+	te.mockedOutputProvider.PublishFunc = func(in1 providers.Message) (providers.Message, error) {
+		return providers.Message{}, fmt.Errorf("boom")
+	}
 	te.config.Pipes["test_pipe"].OnFail = append(te.config.Pipes["test_pipe"].OnFail, te.config.Pipes["test_pipe"].OnFail[0])
 
 	te.pipeServer.Listen()
