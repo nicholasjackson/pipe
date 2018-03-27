@@ -52,7 +52,10 @@ type LoggerImpl struct {
 
 // New creates a new logger from the given logger and statsd client
 func New(l hclog.Logger, s *statsd.Client) Logger {
-	return &LoggerImpl{}
+	return &LoggerImpl{
+		logger: l,
+		stats:  s,
+	}
 }
 
 // GetLogger returns the assigned logger
