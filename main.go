@@ -9,6 +9,8 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/nicholasjackson/pipe/config"
+	"github.com/nicholasjackson/pipe/logger"
+	"github.com/nicholasjackson/pipe/server"
 )
 
 const appName = "pipe"
@@ -18,9 +20,6 @@ var statsDAddress = flag.String("statsd", "localhost:8125", "statsD server")
 var logFormat = flag.String("log_format", "text", "log format json | text")
 var logLevel = flag.String("log_level", "INFO", "log level INFO | DEBUG | ERROR | TRACE")
 
-var stats *statsd.Client
-var logger hclog.Logger
-
 var version = "notset"
 
 func main() {
@@ -28,15 +27,18 @@ func main() {
 
 	flag.Parse()
 
-	//c := loadConfig()
-	logger = setupLogging(*logFormat, *logLevel, appName)
-	stats = setupStatsD(*statsDAddress, appName)
+	l := createLogger(*logFormat, *logLevel, "pipe", *statsDAddress)
+
+	c := loadConfig(l)
+	s := server.New(c, l)
+
+	s.Listen()
 
 	http.DefaultServeMux.HandleFunc("/health", healthCheck)
 	http.ListenAndServe(":9999", nil)
 }
 
-func loadConfig() *config.Config {
+func loadConfig(l logger.Logger) *config.Config {
 	c, err := config.ParseFolder(*configFolder)
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +46,18 @@ func loadConfig() *config.Config {
 
 	fmt.Printf("Loaded config: %#v\n", c)
 
+	c.Pipes, err = config.SetupPipes(c, l)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return c
+}
+
+func createLogger(logFormat, logLevel, appName, statsDAddress string) logger.Logger {
+	l := setupLogging(logFormat, logLevel, appName)
+	s := setupStatsD(statsDAddress, appName)
+	return logger.New(l, s)
 }
 
 func setupLogging(logFormat, logLevel, appName string) hclog.Logger {
@@ -65,7 +78,7 @@ func setupLogging(logFormat, logLevel, appName string) hclog.Logger {
 func setupStatsD(server, appName string) *statsd.Client {
 	stats, err := statsd.New(server)
 	if err != nil {
-		logger.Warn("Unable to create StatsD connection")
+		log.Println("Unable to create StatsD connection")
 	}
 	stats.Namespace = appName + "."
 

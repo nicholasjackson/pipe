@@ -33,7 +33,7 @@ func pipeIsRunningAndConfigured() error {
 }
 
 func iCallAnHttpEndpoint() error {
-	resp, err := http.Get("http://localhost:8091/")
+	resp, err := http.Post("http://localhost:18091/", "application/json", nil)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func FeatureContext(s *godog.Suite) {
 		}
 
 		httpServer = &http.Server{
-			Addr: "localhost:8092",
+			Addr: "localhost:18092",
 		}
 		http.HandleFunc("/", serveHTTP)
 

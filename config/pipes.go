@@ -3,23 +3,22 @@ package config
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-go/statsd"
-	hclog "github.com/hashicorp/go-hclog"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/pipe"
 )
 
-func SetupPipes(c *Config, logger hclog.Logger, stats *statsd.Client) (map[string]*pipe.Pipe, error) {
+func SetupPipes(c *Config, l logger.Logger) (map[string]*pipe.Pipe, error) {
 	var errs []error
 	for _, i := range c.Inputs {
-		i.Setup(c.ConnectionPools[i.Type()], logger, stats)
+		i.Setup(c.ConnectionPools[i.Type()], l.GetLogger(), l.GetStatsD())
 	}
 
 	for _, i := range c.Outputs {
-		i.Setup(c.ConnectionPools[i.Type()], logger, stats)
+		i.Setup(c.ConnectionPools[i.Type()], l.GetLogger(), l.GetStatsD())
 	}
 
 	for _, p := range c.Pipes {
-		logger.Info("Configure", "pipe", p.Name)
+		l.GetLogger().Info("Configure", "pipe", p.Name)
 
 		ip := c.Inputs[p.Input]
 		if ip == nil {

@@ -17,8 +17,9 @@ type HTTPProvider struct {
 	direction string
 	Protocol  string               `hcl:"protocol,optional"` // default to http
 	Server    string               `hcl:"server"`
-	Port      int                  `hcl:"port,optional"` // default to 80
-	Path      string               `hcl:"path,optional"` // default to /
+	Port      int                  `hcl:"port,optional"`   // default to 80
+	Method    string               `hcl:"method,optional"` // default to POST
+	Path      string               `hcl:"path,optional"`   // default to /
 	TLS       *providers.TLS       `hcl:"tls_config,block"`
 	AuthBasic *providers.AuthBasic `hcl:"auth_basic,block"`
 	AuthMTLS  *providers.AuthMTLS  `hcl:"auth_mtls,block"`
@@ -30,7 +31,14 @@ type HTTPProvider struct {
 }
 
 func NewHTTPProvider(name string, direction string) *HTTPProvider {
-	return &HTTPProvider{name: name, direction: direction}
+	return &HTTPProvider{
+		name:      name,
+		direction: direction,
+		Method:    "POST",
+		Path:      "/",
+		Port:      80,
+		Protocol:  "http",
+	}
 }
 
 func (sp *HTTPProvider) Name() string {
@@ -76,7 +84,8 @@ func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
 		return nil, nil
 	}
 
-	err := h.connection.ListenPath(h.Path, "GET", h.messageHandler)
+	// should be configureable
+	err := h.connection.ListenPath(h.Path, "POST", h.messageHandler)
 
 	if err != nil {
 		h.stats.Incr("listen.http.failed", nil, 1)

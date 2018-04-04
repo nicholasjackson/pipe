@@ -72,6 +72,17 @@ func setupHTTPProvider(t *testing.T, direction string) (*is.I, *HTTPProvider, *C
 	}
 }
 
+func TestNewSetsDefaults(t *testing.T) {
+	is := is.New(t)
+
+	p := NewHTTPProvider("test", "output")
+
+	is.Equal("POST", p.Method)   // should have set the method to post
+	is.Equal(80, p.Port)         // should have set the default port to 80
+	is.Equal("/", p.Path)        // should have set the default path to /
+	is.Equal("http", p.Protocol) // should have set the default protocol to http
+}
+
 func TestSetupWithInboundTypeDoesGetsConnection(t *testing.T) {
 	is, _, _, mcp, cleanup := setupHTTPProvider(t, providers.DirectionInput)
 	defer cleanup()

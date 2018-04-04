@@ -1,14 +1,14 @@
 input "http" "web_messages_in" {
   protocol = "http"
   server = "localhost"
-  port = 8091
+  port = 18091
   path = "/"
 }
 
 output "http" "web_messages_out" {
   protocol = "http"
   server = "localhost"
-  port = 8092
+  port = 18092
   path = "/"
 }
 

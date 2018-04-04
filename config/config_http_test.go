@@ -21,6 +21,7 @@ func TestParsesConfigHTTPProviderHCL(t *testing.T) {
 	is.Equal("http", p.Protocol)        // should have set the protocol
 	is.Equal("192.168.1.123", p.Server) // should have set the server
 	is.Equal(80, p.Port)                // should have set the port
+	is.Equal("GET", p.Method)           // should set the method to GET
 	is.Equal("/", p.Path)               // should have set the path
 
 	is.Equal("key", p.TLS.TLSClientKey)   // should have set the ca key

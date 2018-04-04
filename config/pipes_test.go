@@ -6,12 +6,10 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
 )
-
-var testLogger hclog.Logger
-var testStatsD *statsd.Client
 
 func buildConfig() (*Config, *providers.ProviderMock) {
 	providerMock := &providers.ProviderMock{
@@ -59,36 +57,35 @@ func buildConfig() (*Config, *providers.ProviderMock) {
 		providerMock
 }
 
-func setupPipes(t *testing.T) (*is.I, *Config, *providers.ProviderMock) {
+func setupPipes(t *testing.T) (*is.I, *Config, logger.Logger, *providers.ProviderMock) {
 	c, pm := buildConfig()
-	testLogger = hclog.Default()
-	testStatsD, _ = statsd.New("localhost:8125")
+	l := testGetLogger()
 
-	return is.New(t), c, pm
+	return is.New(t), c, l, pm
 }
 
 func TestSetupPipesCallsSetupOnTheOutputProviders(t *testing.T) {
-	is, c, m := setupPipes(t)
+	is, c, l, m := setupPipes(t)
 
-	SetupPipes(c, testLogger, testStatsD)
+	SetupPipes(c, l)
 
 	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
 }
 
 func TestSetupPipesCallsSetupOnTheInputProviders(t *testing.T) {
-	is, c, m := setupPipes(t)
+	is, c, l, m := setupPipes(t)
 
-	SetupPipes(c, testLogger, testStatsD)
+	SetupPipes(c, l)
 
 	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
 	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
 }
 
 func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 
-	p, err := SetupPipes(c, testLogger, testStatsD)
+	p, err := SetupPipes(c, l)
 
 	is.NoErr(err)
 	is.Equal(1, len(p))                                               // should have created one pipe
@@ -96,9 +93,9 @@ func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {
 }
 
 func TestSetupPipesSetsTheCorrectActionOutputProviderOnThePipe(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 
-	p, err := SetupPipes(c, testLogger, testStatsD)
+	p, err := SetupPipes(c, l)
 
 	is.NoErr(err)
 	is.Equal(1, len(p))                                                        // should have created one pipe
@@ -106,9 +103,9 @@ func TestSetupPipesSetsTheCorrectActionOutputProviderOnThePipe(t *testing.T) {
 }
 
 func TestSetupPipesSetsTheCorrectSuccessOutputProviderOnThePipe(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 
-	p, err := SetupPipes(c, testLogger, testStatsD)
+	p, err := SetupPipes(c, l)
 
 	is.NoErr(err)
 	is.Equal(1, len(p))                                                              // should have created one pipe
@@ -116,9 +113,9 @@ func TestSetupPipesSetsTheCorrectSuccessOutputProviderOnThePipe(t *testing.T) {
 }
 
 func TestSetupPipesSetsTheCorrectFailOutputProviderOnThePipe(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 
-	p, err := SetupPipes(c, testLogger, testStatsD)
+	p, err := SetupPipes(c, l)
 
 	is.NoErr(err)
 	is.Equal(1, len(p))                                                           // should have created one pipe
@@ -126,37 +123,37 @@ func TestSetupPipesSetsTheCorrectFailOutputProviderOnThePipe(t *testing.T) {
 }
 
 func TestSetupPipesReturnsErrorWhenNoOutputFound(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 	c.Outputs = make(map[string]providers.Provider)
 
-	_, err := SetupPipes(c, testLogger, testStatsD)
+	_, err := SetupPipes(c, l)
 
 	is.True(err != nil) // should have returned and error
 }
 
 func TestSetupPipesReturnsErrorWhenNoInputFound(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 	c.Inputs = make(map[string]providers.Provider)
 
-	_, err := SetupPipes(c, testLogger, testStatsD)
+	_, err := SetupPipes(c, l)
 
 	is.True(err != nil) // should have returned and error
 }
 
 func TestSetupPipesReturnsErrorWhenNoSuccessOutputFound(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 	c.Pipes["test_pipe"].OnSuccess[0].Output = "does not exist"
 
-	_, err := SetupPipes(c, testLogger, testStatsD)
+	_, err := SetupPipes(c, l)
 
 	is.True(err != nil) // should have returned and error
 }
 
 func TestSetupPipesReturnsErrorWhenNoFailOutputFound(t *testing.T) {
-	is, c, _ := setupPipes(t)
+	is, c, l, _ := setupPipes(t)
 	c.Pipes["test_pipe"].OnFail[0].Output = "does not exist"
 
-	_, err := SetupPipes(c, testLogger, testStatsD)
+	_, err := SetupPipes(c, l)
 
 	is.True(err != nil) // should have returned and error
 }

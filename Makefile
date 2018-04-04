@@ -31,6 +31,9 @@ run_docker:
 build_all:
 	goreleaser -snapshot -rm-dist -skip-validate
 
+goconvey:
+	goconvey -excludedDirs "test_functional,vendor"
+
 test_nats_provider:
 	./scripts/functional_nats.sh
 

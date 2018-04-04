@@ -34,9 +34,9 @@ func StartServer(configFolder string) (*server.PipeServer, *bytes.Buffer, error)
 	l := hclog.New(lo)
 	stats, _ := statsd.New("localhost:8125")
 
-	c.Pipes, _ = config.SetupPipes(c, l, stats)
-
 	logger := logger.New(l, stats)
+	c.Pipes, _ = config.SetupPipes(c, logger)
+
 	s := server.New(c, logger)
 	s.Listen()
 
