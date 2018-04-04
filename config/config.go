@@ -152,7 +152,7 @@ func processBody(c *Config, b *hclsyntax.Block) error {
 	case "http":
 		i = web.NewHTTPProvider(b.Labels[1], b.Type)
 		if c.ConnectionPools["http"] == nil {
-			c.ConnectionPools["http"] = &web.HTTPConnectionPool{}
+			c.ConnectionPools["http"] = web.NewHTTPConnectionPool()
 		}
 	default:
 		return fmt.Errorf("Provider %s, is not a known provider", b.Labels[0])

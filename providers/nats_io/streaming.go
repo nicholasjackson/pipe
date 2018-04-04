@@ -43,21 +43,21 @@ func (sp *StreamingProvider) Direction() string {
 }
 
 func (sp *StreamingProvider) Setup(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
+	sp.stats = stats
+	sp.logger = logger
+
 	pool := cp.(ConnectionPool)
 
 	conn, err := pool.GetConnection(sp.Server, sp.ClusterID)
 	if err != nil {
-		stats.Incr("connection.nats.failed", nil, 1)
-		logger.Error("Unable to connect to nats server", "error", err)
+		sp.stats.Incr("connection.nats.failed", nil, 1)
+		sp.logger.Error("Unable to connect to nats server", "error", err)
 		return err
 	}
 
-	stats.Incr("connection.nats.created", nil, 1)
-	logger.Debug("Created connection for", sp.Server, sp.ClusterID)
-
+	sp.stats.Incr("connection.nats.created", nil, 1)
+	sp.logger.Debug("Created connection for", sp.Server, sp.ClusterID)
 	sp.connection = conn
-	sp.stats = stats
-	sp.logger = logger
 
 	return nil
 }

@@ -71,7 +71,10 @@ func FeatureContext(s *godog.Suite) {
 
 		go func() {
 			err := httpServer.ListenAndServe()
-			log.WriteString("Error starting server:" + err.Error())
+
+			if err != http.ErrServerClosed {
+				log.WriteString("Error starting server:" + err.Error())
+			}
 		}()
 
 		// wait for server to start
