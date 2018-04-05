@@ -57,6 +57,7 @@ func (h *HTTPConnectionPool) GetConnection(bindAddr string, port int) (Connectio
 	go func() {
 		var lastError error
 		for try := 0; try < h.healthCheckMax; try++ {
+			time.Sleep(h.healthCheckInterval) // wait before running another health check
 
 			// perform a health check
 			err := s.CheckHealth()
@@ -66,12 +67,12 @@ func (h *HTTPConnectionPool) GetConnection(bindAddr string, port int) (Connectio
 			}
 
 			lastError = err
-			time.Sleep(h.healthCheckInterval) // wait before running another health check
 		}
 
 		errChan <- fmt.Errorf("Error starting server: %s", lastError.Error())
 	}()
 
+	// wait for an error or the health check to pass
 	select {
 	case e := <-errChan:
 		return nil, e

@@ -62,8 +62,8 @@ func TestGetsExistingConnectionFromPool(t *testing.T) {
 	is.NoErr(err) // should not have returned an error
 
 	is.True(c1 != nil)                         // connection should not be nil
+	is.Equal(c1, cm)                           // connection 1 should be the same object returned from the factory
 	is.Equal(c1, c2)                           // connection 1 and 2 should be the same object
-	is.Equal(c1, cm)                           // connection 1 and 2 should be the same object
 	is.Equal(1, len(cm.ListenAndServeCalls())) // should have called listen and serve
 }
 
