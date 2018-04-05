@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"net/http"
 	"time"
 )
 
@@ -14,13 +13,23 @@ type ConnectionPool interface {
 
 // HTTPConnectionPool is a concrete implementation of ConnectionPool
 type HTTPConnectionPool struct {
-	connections map[string]Connection
+	healthCheckInterval time.Duration
+	healthCheckMax      int
+	connectionFactory   func(bindAddr string, port int) Connection
+	connections         map[string]Connection
 }
 
 func NewHTTPConnectionPool() *HTTPConnectionPool {
 	return &HTTPConnectionPool{
-		connections: make(map[string]Connection),
+		healthCheckInterval: 500 * time.Millisecond,
+		healthCheckMax:      10,
+		connectionFactory:   createConnection,
+		connections:         make(map[string]Connection),
 	}
+}
+
+func createConnection(bindAddr string, port int) Connection {
+	return NewHTTPConnection(bindAddr, port)
 }
 
 // GetConnection return a http server from the pool if one exists, or creates a new http server and starts
@@ -33,34 +42,31 @@ func (h *HTTPConnectionPool) GetConnection(bindAddr string, port int) (Connectio
 	}
 
 	// Need to add TLS setup
-	s := NewHTTPConnection(bindAddr, port)
+	s := h.connectionFactory(bindAddr, port)
 	errChan := make(chan error)
 	startedChan := make(chan bool)
 
 	// need to see if returns an error
 	go func() {
 		err := s.ListenAndServe()
-		errChan <- err
+		if err != nil {
+			errChan <- err
+		}
 	}()
 
 	go func() {
 		var lastError error
-		for try := 0; try < 10; try++ {
+		for try := 0; try < h.healthCheckMax; try++ {
 
 			// perform a health check
-			resp, err := http.Get(fmt.Sprintf("http://%s:%d/_health", bindAddr, port))
-			if err == nil && resp.StatusCode == http.StatusOK {
+			err := s.CheckHealth()
+			if err == nil {
 				startedChan <- true
 				return
 			}
 
-			// if the health check returns anything other than 200 raise an error
-			if resp.StatusCode != http.StatusOK {
-				err = fmt.Errorf("Expected status %d from health check, got status %d", http.StatusOK, resp.StatusCode)
-			}
-
 			lastError = err
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(h.healthCheckInterval) // wait before running another health check
 		}
 
 		errChan <- fmt.Errorf("Error starting server: %s", lastError.Error())

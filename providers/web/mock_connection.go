@@ -11,6 +11,7 @@ import (
 
 var (
 	lockConnectionMockAddr           sync.RWMutex
+	lockConnectionMockCheckHealth    sync.RWMutex
 	lockConnectionMockListenAndServe sync.RWMutex
 	lockConnectionMockListenPath     sync.RWMutex
 	lockConnectionMockShutdown       sync.RWMutex
@@ -24,6 +25,9 @@ var (
 //         mockedConnection := &ConnectionMock{
 //             AddrFunc: func() string {
 // 	               panic("TODO: mock out the Addr method")
+//             },
+//             CheckHealthFunc: func() error {
+// 	               panic("TODO: mock out the CheckHealth method")
 //             },
 //             ListenAndServeFunc: func() error {
 // 	               panic("TODO: mock out the ListenAndServe method")
@@ -44,6 +48,9 @@ type ConnectionMock struct {
 	// AddrFunc mocks the Addr method.
 	AddrFunc func() string
 
+	// CheckHealthFunc mocks the CheckHealth method.
+	CheckHealthFunc func() error
+
 	// ListenAndServeFunc mocks the ListenAndServe method.
 	ListenAndServeFunc func() error
 
@@ -57,6 +64,9 @@ type ConnectionMock struct {
 	calls struct {
 		// Addr holds details about calls to the Addr method.
 		Addr []struct {
+		}
+		// CheckHealth holds details about calls to the CheckHealth method.
+		CheckHealth []struct {
 		}
 		// ListenAndServe holds details about calls to the ListenAndServe method.
 		ListenAndServe []struct {
@@ -101,6 +111,32 @@ func (mock *ConnectionMock) AddrCalls() []struct {
 	lockConnectionMockAddr.RLock()
 	calls = mock.calls.Addr
 	lockConnectionMockAddr.RUnlock()
+	return calls
+}
+
+// CheckHealth calls CheckHealthFunc.
+func (mock *ConnectionMock) CheckHealth() error {
+	if mock.CheckHealthFunc == nil {
+		panic("moq: ConnectionMock.CheckHealthFunc is nil but Connection.CheckHealth was just called")
+	}
+	callInfo := struct {
+	}{}
+	lockConnectionMockCheckHealth.Lock()
+	mock.calls.CheckHealth = append(mock.calls.CheckHealth, callInfo)
+	lockConnectionMockCheckHealth.Unlock()
+	return mock.CheckHealthFunc()
+}
+
+// CheckHealthCalls gets all the calls that were made to CheckHealth.
+// Check the length with:
+//     len(mockedConnection.CheckHealthCalls())
+func (mock *ConnectionMock) CheckHealthCalls() []struct {
+} {
+	var calls []struct {
+	}
+	lockConnectionMockCheckHealth.RLock()
+	calls = mock.calls.CheckHealth
+	lockConnectionMockCheckHealth.RUnlock()
 	return calls
 }
 

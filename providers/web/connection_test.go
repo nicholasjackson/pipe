@@ -75,3 +75,15 @@ func TestConnectionCreatesHealthHandler(t *testing.T) {
 	is.NoErr(err)                            // calling endpoint should not return an error
 	is.Equal(http.StatusOK, resp.StatusCode) // should have retuend status 200 for health
 }
+
+func TestConnectionCheckHealthCallsHealthHandler(t *testing.T) {
+	is, c, _, cleanup := setupHTTPConnection(t)
+	defer cleanup()
+
+	httpC := http.DefaultClient
+	httpC.Timeout = 1 * time.Second
+
+	err := c.CheckHealth()
+
+	is.NoErr(err) // calling endpoint should not return an error
+}
