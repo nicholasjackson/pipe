@@ -16,7 +16,17 @@ import (
 )
 
 func StartServer(configFolder string) (*server.PipeServer, *bytes.Buffer, error) {
-	c, err := config.ParseFolder(configFolder)
+	buff := bytes.NewBuffer([]byte{})
+	lo := hclog.DefaultOptions
+	lo.Level = hclog.Trace
+	lo.Output = buff
+
+	l := hclog.New(lo)
+	stats, _ := statsd.New("localhost:8125")
+
+	log := logger.New(l, stats)
+
+	c, err := config.ParseFolder(configFolder, log)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,19 +35,9 @@ func StartServer(configFolder string) (*server.PipeServer, *bytes.Buffer, error)
 		return nil, nil, fmt.Errorf("Ensure config has at least 1 pipe, 1 input, and 1 output: %s", pretty.Sprint(c))
 	}
 
-	buff := bytes.NewBuffer([]byte{})
+	c.Pipes, _ = config.SetupPipes(c, log)
 
-	lo := hclog.DefaultOptions
-	lo.Level = hclog.Trace
-	lo.Output = buff
-
-	l := hclog.New(lo)
-	stats, _ := statsd.New("localhost:8125")
-
-	logger := logger.New(l, stats)
-	c.Pipes, _ = config.SetupPipes(c, logger)
-
-	s := server.New(c, logger)
+	s := server.New(c, log)
 	s.Listen()
 
 	return s, buff, nil
