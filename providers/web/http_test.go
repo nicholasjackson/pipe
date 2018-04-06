@@ -14,6 +14,7 @@ import (
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/providers"
 )
 
@@ -56,16 +57,19 @@ func setupHTTPProvider(t *testing.T, direction string) (*is.I, *HTTPProvider, *C
 		},
 	}
 
+	stats, _ := statsd.New("http://localhost:8125")
+	log := hclog.Default()
+
 	p := &HTTPProvider{
 		direction: direction,
 		Protocol:  u.Scheme,
 		Server:    u.Hostname(),
 		Port:      port,
 		Path:      u.Path,
+		pool:      mockedConnectionPool,
+		log:       logger.New(log, stats),
 	}
-
-	stats, _ := statsd.New("http://localhost:8125")
-	p.Setup(mockedConnectionPool, hclog.Default(), stats)
+	p.Setup()
 
 	return is, p, mockedConnection, mockedConnectionPool, func() {
 		httptest.Close()
@@ -75,7 +79,7 @@ func setupHTTPProvider(t *testing.T, direction string) (*is.I, *HTTPProvider, *C
 func TestNewSetsDefaults(t *testing.T) {
 	is := is.New(t)
 
-	p := NewHTTPProvider("test", "output")
+	p := NewHTTPProvider("test", "output", nil, nil)
 
 	is.Equal("POST", p.Method)   // should have set the method to post
 	is.Equal(80, p.Port)         // should have set the default port to 80

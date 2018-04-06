@@ -8,6 +8,7 @@ import (
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	stan "github.com/nats-io/go-nats-streaming"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/providers"
 )
 
@@ -36,12 +37,6 @@ func setupStreamingProvider(t *testing.T, direction string) (*is.I, *StreamingPr
 		},
 	}
 
-	p := &StreamingProvider{
-		direction: direction,
-		Queue:     "testqueue",
-		name:      "testprovider",
-	}
-
 	mockedConnectionPool := &ConnectionPoolMock{
 		GetConnectionFunc: func(server string, clusterID string) (Connection, error) {
 			return mockedConnection, nil
@@ -49,7 +44,16 @@ func setupStreamingProvider(t *testing.T, direction string) (*is.I, *StreamingPr
 	}
 
 	stats, _ := statsd.New("http://localhost:8125")
-	p.Setup(mockedConnectionPool, hclog.Default(), stats)
+	log := hclog.Default()
+
+	p := &StreamingProvider{
+		direction: direction,
+		Queue:     "testqueue",
+		name:      "testprovider",
+		log:       logger.New(log, stats),
+		pool:      mockedConnectionPool,
+	}
+	p.Setup()
 
 	return is, p, mockedConnection, mockedSubscription, mockedConnectionPool
 }

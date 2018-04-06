@@ -28,7 +28,7 @@ func createMocks(m *serverTest) *serverTest {
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
 			return providers.Message{}, nil
 		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
+		SetupFunc: func() error {
 			return nil
 		},
 		StopFunc: func() error {
@@ -49,7 +49,7 @@ func createMocks(m *serverTest) *serverTest {
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
 			return providers.Message{}, nil
 		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
+		SetupFunc: func() error {
 			return nil
 		},
 		StopFunc: func() error {
@@ -67,7 +67,7 @@ func createMocks(m *serverTest) *serverTest {
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
 			return providers.Message{}, nil
 		},
-		SetupFunc: func(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
+		SetupFunc: func() error {
 			return nil
 		},
 		StopFunc: func() error {
@@ -88,15 +88,15 @@ func createMocks(m *serverTest) *serverTest {
 		GetStatsDFunc: func() *statsd.Client {
 			return nil
 		},
-		ProviderConnectionCreatedFunc: func(in1 *providers.Provider) {
+		ProviderConnectionCreatedFunc: func(in1 providers.Provider) {
 		},
-		ProviderConnectionFailedFunc: func(in1 *providers.Provider) {
+		ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ProviderMessagePublishedFunc: func(in1 *providers.Provider, in2 *providers.Message) {
+		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message) {
 		},
-		ProviderSubcriptionCreatedFunc: func(in1 *providers.Provider) {
+		ProviderSubcriptionCreatedFunc: func(in1 providers.Provider) {
 		},
-		ProviderSubcriptionFailedFunc: func(in1 *providers.Provider) {
+		ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
 		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
 		},

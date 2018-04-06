@@ -10,11 +10,11 @@ import (
 func SetupPipes(c *Config, l logger.Logger) (map[string]*pipe.Pipe, error) {
 	var errs []error
 	for _, i := range c.Inputs {
-		i.Setup(c.ConnectionPools[i.Type()], l.GetLogger(), l.GetStatsD())
+		i.Setup()
 	}
 
 	for _, i := range c.Outputs {
-		i.Setup(c.ConnectionPools[i.Type()], l.GetLogger(), l.GetStatsD())
+		i.Setup()
 	}
 
 	for _, p := range c.Pipes {

@@ -46,7 +46,7 @@ func setup(t *testing.T) (*is.I, *serverTest) {
 		},
 	}
 
-	c := config.New()
+	c := config.New(m.mockedLogger)
 	c.Outputs["mock_output"] = m.mockedOutputProvider
 	c.Outputs["mock_success_fail"] = m.mockedSuccessFailProvider
 	c.Inputs["mock_input"] = m.mockedInputProvider
@@ -66,8 +66,7 @@ func TestListenSetsUpInputProviders(t *testing.T) {
 	te.pipeServer.Listen()
 
 	input := te.config.Inputs["mock_input"].(*providers.ProviderMock)
-	is.Equal(1, len(input.SetupCalls()))                                           // should have called setup on the input provider
-	is.Equal(te.config.ConnectionPools["mock_provider"], input.SetupCalls()[0].Cp) // should have setup the inputs
+	is.Equal(1, len(input.SetupCalls())) // should have called setup on the input provider
 }
 
 func TestListenSetsUpOutputProviders(t *testing.T) {
@@ -76,8 +75,7 @@ func TestListenSetsUpOutputProviders(t *testing.T) {
 	te.pipeServer.Listen()
 
 	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
-	is.Equal(1, len(output.SetupCalls()))                                           // should have called setup on the inputs provider
-	is.Equal(te.config.ConnectionPools["mock_provider"], output.SetupCalls()[0].Cp) // should have setup the outputs
+	is.Equal(1, len(output.SetupCalls())) // should have called setup on the inputs provider
 }
 
 func TestListenListensForInputProviderMessages(t *testing.T) {

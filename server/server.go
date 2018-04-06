@@ -36,11 +36,11 @@ func (p *PipeServer) Listen() {
 	p.startupGroup.Add(len(p.config.Inputs))
 
 	for _, i := range p.config.Inputs {
-		i.Setup(p.config.ConnectionPools[i.Type()], p.logger.GetLogger(), p.logger.GetStatsD())
+		i.Setup()
 	}
 
 	for _, i := range p.config.Outputs {
-		i.Setup(p.config.ConnectionPools[i.Type()], p.logger.GetLogger(), p.logger.GetStatsD())
+		i.Setup()
 	}
 
 	// setup listeners

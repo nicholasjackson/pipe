@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/hcl2/hcl"
 	"github.com/hashicorp/hcl2/hcl/hclsyntax"
 	"github.com/hashicorp/hcl2/hclparse"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
 	nats "github.com/nicholasjackson/pipe/providers/nats_io"
@@ -27,9 +28,10 @@ type Config struct {
 	Outputs         map[string]providers.Provider
 	ConnectionPools map[string]providers.ConnectionPool
 	Pipes           map[string]*pipe.Pipe
+	log             logger.Logger
 }
 
-func New() *Config {
+func New(l logger.Logger) *Config {
 	ctx = buildContext()
 
 	return &Config{
@@ -37,6 +39,7 @@ func New() *Config {
 		Inputs:          make(map[string]providers.Provider),
 		Outputs:         make(map[string]providers.Provider),
 		Pipes:           make(map[string]*pipe.Pipe),
+		log:             l,
 	}
 }
 
@@ -63,9 +66,9 @@ func buildContext() *hcl.EvalContext {
 	return ctx
 }
 
-func ParseFolder(folder string) (*Config, error) {
+func ParseFolder(folder string, l logger.Logger) (*Config, error) {
 	abs, _ := filepath.Abs(folder)
-	c := New()
+	c := New(l)
 
 	// current folder
 	files, err := filepath.Glob(path.Join(abs, "*.hcl"))
@@ -84,7 +87,7 @@ func ParseFolder(folder string) (*Config, error) {
 	files = append(files, filesDir...)
 
 	for _, f := range files {
-		conf, err := ParseHCLFile(f)
+		conf, err := ParseHCLFile(f, l)
 		if err != nil {
 			return c, err
 		}
@@ -106,9 +109,9 @@ func ParseFolder(folder string) (*Config, error) {
 	return c, nil
 }
 
-func ParseHCLFile(file string) (*Config, error) {
+func ParseHCLFile(file string, l logger.Logger) (*Config, error) {
 	parser := hclparse.NewParser()
-	config := New()
+	config := New(l)
 
 	f, diag := parser.ParseHCLFile(file)
 	if diag.HasErrors() {
@@ -145,15 +148,21 @@ func processBody(c *Config, b *hclsyntax.Block) error {
 
 	switch b.Labels[0] {
 	case "nats_queue":
-		i = nats.NewStreamingProvider(b.Labels[1], b.Type)
-		if c.ConnectionPools["nats_queue"] == nil {
-			c.ConnectionPools["nats_queue"] = nats.NewStreamingConnectionPool()
+		cp := c.ConnectionPools["nats_queue"]
+		if cp == nil {
+			cp = nats.NewStreamingConnectionPool()
+			c.ConnectionPools["nats_queue"] = cp
 		}
+
+		i = nats.NewStreamingProvider(b.Labels[1], b.Type, cp.(nats.ConnectionPool), c.log)
 	case "http":
-		i = web.NewHTTPProvider(b.Labels[1], b.Type)
-		if c.ConnectionPools["http"] == nil {
-			c.ConnectionPools["http"] = web.NewHTTPConnectionPool()
+		cp := c.ConnectionPools["http"]
+		if cp == nil {
+			cp = web.NewHTTPConnectionPool()
+			c.ConnectionPools["http"] = cp
 		}
+
+		i = web.NewHTTPProvider(b.Labels[1], b.Type, cp.(web.ConnectionPool), c.log)
 	default:
 		return fmt.Errorf("Provider %s, is not a known provider", b.Labels[0])
 	}

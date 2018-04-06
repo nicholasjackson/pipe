@@ -4,8 +4,6 @@
 package providers
 
 import (
-	"github.com/DataDog/datadog-go/statsd"
-	"github.com/hashicorp/go-hclog"
 	"sync"
 )
 
@@ -37,7 +35,7 @@ var (
 //             PublishFunc: func(in1 Message) (Message, error) {
 // 	               panic("TODO: mock out the Publish method")
 //             },
-//             SetupFunc: func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
+//             SetupFunc: func() error {
 // 	               panic("TODO: mock out the Setup method")
 //             },
 //             StopFunc: func() error {
@@ -66,7 +64,7 @@ type ProviderMock struct {
 	PublishFunc func(in1 Message) (Message, error)
 
 	// SetupFunc mocks the Setup method.
-	SetupFunc func(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error
+	SetupFunc func() error
 
 	// StopFunc mocks the Stop method.
 	StopFunc func() error
@@ -92,12 +90,6 @@ type ProviderMock struct {
 		}
 		// Setup holds details about calls to the Setup method.
 		Setup []struct {
-			// Cp is the cp argument value.
-			Cp ConnectionPool
-			// Log is the log argument value.
-			Log hclog.Logger
-			// Stats is the stats argument value.
-			Stats *statsd.Client
 		}
 		// Stop holds details about calls to the Stop method.
 		Stop []struct {
@@ -218,37 +210,24 @@ func (mock *ProviderMock) PublishCalls() []struct {
 }
 
 // Setup calls SetupFunc.
-func (mock *ProviderMock) Setup(cp ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
+func (mock *ProviderMock) Setup() error {
 	if mock.SetupFunc == nil {
 		panic("moq: ProviderMock.SetupFunc is nil but Provider.Setup was just called")
 	}
 	callInfo := struct {
-		Cp    ConnectionPool
-		Log   hclog.Logger
-		Stats *statsd.Client
-	}{
-		Cp:    cp,
-		Log:   log,
-		Stats: stats,
-	}
+	}{}
 	lockProviderMockSetup.Lock()
 	mock.calls.Setup = append(mock.calls.Setup, callInfo)
 	lockProviderMockSetup.Unlock()
-	return mock.SetupFunc(cp, log, stats)
+	return mock.SetupFunc()
 }
 
 // SetupCalls gets all the calls that were made to Setup.
 // Check the length with:
 //     len(mockedProvider.SetupCalls())
 func (mock *ProviderMock) SetupCalls() []struct {
-	Cp    ConnectionPool
-	Log   hclog.Logger
-	Stats *statsd.Client
 } {
 	var calls []struct {
-		Cp    ConnectionPool
-		Log   hclog.Logger
-		Stats *statsd.Client
 	}
 	lockProviderMockSetup.RLock()
 	calls = mock.calls.Setup

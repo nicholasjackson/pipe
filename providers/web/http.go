@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DataDog/datadog-go/statsd"
-	hclog "github.com/hashicorp/go-hclog"
+	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/providers"
 )
 
@@ -24,16 +23,21 @@ type HTTPProvider struct {
 	AuthBasic *providers.AuthBasic `hcl:"auth_basic,block"`
 	AuthMTLS  *providers.AuthMTLS  `hcl:"auth_mtls,block"`
 
+	pool       ConnectionPool
 	connection Connection
-	stats      *statsd.Client
-	logger     hclog.Logger
+	log        logger.Logger
 	msgChannel chan *providers.Message
 }
 
-func NewHTTPProvider(name string, direction string) *HTTPProvider {
+func NewHTTPProvider(
+	name, direction string,
+	cp ConnectionPool, l logger.Logger) *HTTPProvider {
+
 	return &HTTPProvider{
 		name:      name,
 		direction: direction,
+		log:       l,
+		pool:      cp,
 		Method:    "POST",
 		Path:      "/",
 		Port:      80,
@@ -53,26 +57,20 @@ func (h *HTTPProvider) Direction() string {
 	return h.direction
 }
 
-func (h *HTTPProvider) Setup(cp providers.ConnectionPool, log hclog.Logger, stats *statsd.Client) error {
-	h.stats = stats
-	h.logger = log
-
+func (h *HTTPProvider) Setup() error {
 	// do not get a connection from the pool if this is an output provider
 	if h.direction == providers.DirectionOutput {
 		return nil
 	}
 
 	h.msgChannel = make(chan *providers.Message, 1)
-	pool := cp.(ConnectionPool)
-	c, err := pool.GetConnection(h.Server, h.Port)
+	c, err := h.pool.GetConnection(h.Server, h.Port)
 	if err != nil {
-		h.stats.Incr("connection.http.failed", nil, 1)
-		h.logger.Error("Unable to create http server", "error", err)
+		h.log.ProviderConnectionFailed(h, err)
 		return err
 	}
 
-	h.stats.Incr("connection.http.created", nil, 1)
-	h.logger.Info("Created http connection for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
+	h.log.ProviderConnectionCreated(h)
 	h.connection = c
 
 	return nil
@@ -88,20 +86,16 @@ func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
 	err := h.connection.ListenPath(h.Path, "POST", h.messageHandler)
 
 	if err != nil {
-		h.stats.Incr("listen.http.failed", nil, 1)
-		h.logger.Error("Failed to create http listener for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
+		h.log.ProviderSubcriptionFailed(h, err)
 		return nil, err
 	}
 
-	h.stats.Incr("listen.http.created", nil, 1)
-	h.logger.Debug("Created http listener for", "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
-
+	h.log.ProviderSubcriptionCreated(h)
 	return h.msgChannel, err
 }
 
 func (h *HTTPProvider) Publish(msg providers.Message) (providers.Message, error) {
-	h.logger.Debug("Publishing message", "id", msg.ID, "parentid", msg.ParentID, "server", h.Server, "protocol", h.Protocol, "port", h.Port, "path", h.Path)
-	h.stats.Incr("publish.http.call", nil, 1)
+	h.log.ProviderMessagePublished(h, &msg)
 
 	url := fmt.Sprintf("%s://%s:%d%s", h.Protocol, h.Server, h.Port, h.Path)
 	resp, err := http.Post(url, "text/plain", bytes.NewReader(msg.Data))

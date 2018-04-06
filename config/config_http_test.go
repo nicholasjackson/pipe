@@ -10,7 +10,7 @@ import (
 func TestParsesConfigHTTPProviderHCL(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseHCLFile("../test_fixtures/providers/http_output.hcl")
+	c, err := ParseHCLFile("../test_fixtures/providers/http_output.hcl", nil)
 
 	is.NoErr(err)               // error should have been nil
 	is.Equal(1, len(c.Outputs)) // should have returned one input provider

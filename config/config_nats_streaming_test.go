@@ -10,7 +10,7 @@ import (
 func TestParsesConfigNatsProviderHCL(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseHCLFile("../test_fixtures/providers/nats_io_input.hcl")
+	c, err := ParseHCLFile("../test_fixtures/providers/nats_io_input.hcl", nil)
 
 	is.NoErr(err)              // error should have been nil
 	is.Equal(1, len(c.Inputs)) // should have returned one input provider

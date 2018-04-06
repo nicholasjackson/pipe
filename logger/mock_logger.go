@@ -49,19 +49,19 @@ var (
 //             GetStatsDFunc: func() *statsd.Client {
 // 	               panic("TODO: mock out the GetStatsD method")
 //             },
-//             ProviderConnectionCreatedFunc: func(in1 *providers.Provider)  {
+//             ProviderConnectionCreatedFunc: func(in1 providers.Provider)  {
 // 	               panic("TODO: mock out the ProviderConnectionCreated method")
 //             },
-//             ProviderConnectionFailedFunc: func(in1 *providers.Provider)  {
+//             ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error)  {
 // 	               panic("TODO: mock out the ProviderConnectionFailed method")
 //             },
-//             ProviderMessagePublishedFunc: func(in1 *providers.Provider, in2 *providers.Message)  {
+//             ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message)  {
 // 	               panic("TODO: mock out the ProviderMessagePublished method")
 //             },
-//             ProviderSubcriptionCreatedFunc: func(in1 *providers.Provider)  {
+//             ProviderSubcriptionCreatedFunc: func(in1 providers.Provider)  {
 // 	               panic("TODO: mock out the ProviderSubcriptionCreated method")
 //             },
-//             ProviderSubcriptionFailedFunc: func(in1 *providers.Provider)  {
+//             ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error)  {
 // 	               panic("TODO: mock out the ProviderSubcriptionFailed method")
 //             },
 //             ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message)  {
@@ -126,19 +126,19 @@ type LoggerMock struct {
 	GetStatsDFunc func() *statsd.Client
 
 	// ProviderConnectionCreatedFunc mocks the ProviderConnectionCreated method.
-	ProviderConnectionCreatedFunc func(in1 *providers.Provider)
+	ProviderConnectionCreatedFunc func(in1 providers.Provider)
 
 	// ProviderConnectionFailedFunc mocks the ProviderConnectionFailed method.
-	ProviderConnectionFailedFunc func(in1 *providers.Provider)
+	ProviderConnectionFailedFunc func(in1 providers.Provider, in2 error)
 
 	// ProviderMessagePublishedFunc mocks the ProviderMessagePublished method.
-	ProviderMessagePublishedFunc func(in1 *providers.Provider, in2 *providers.Message)
+	ProviderMessagePublishedFunc func(in1 providers.Provider, in2 *providers.Message)
 
 	// ProviderSubcriptionCreatedFunc mocks the ProviderSubcriptionCreated method.
-	ProviderSubcriptionCreatedFunc func(in1 *providers.Provider)
+	ProviderSubcriptionCreatedFunc func(in1 providers.Provider)
 
 	// ProviderSubcriptionFailedFunc mocks the ProviderSubcriptionFailed method.
-	ProviderSubcriptionFailedFunc func(in1 *providers.Provider)
+	ProviderSubcriptionFailedFunc func(in1 providers.Provider, in2 error)
 
 	// ServerActionPublishFunc mocks the ServerActionPublish method.
 	ServerActionPublishFunc func(in1 *pipe.Pipe, in2 *providers.Message)
@@ -199,29 +199,33 @@ type LoggerMock struct {
 		// ProviderConnectionCreated holds details about calls to the ProviderConnectionCreated method.
 		ProviderConnectionCreated []struct {
 			// In1 is the in1 argument value.
-			In1 *providers.Provider
+			In1 providers.Provider
 		}
 		// ProviderConnectionFailed holds details about calls to the ProviderConnectionFailed method.
 		ProviderConnectionFailed []struct {
 			// In1 is the in1 argument value.
-			In1 *providers.Provider
+			In1 providers.Provider
+			// In2 is the in2 argument value.
+			In2 error
 		}
 		// ProviderMessagePublished holds details about calls to the ProviderMessagePublished method.
 		ProviderMessagePublished []struct {
 			// In1 is the in1 argument value.
-			In1 *providers.Provider
+			In1 providers.Provider
 			// In2 is the in2 argument value.
 			In2 *providers.Message
 		}
 		// ProviderSubcriptionCreated holds details about calls to the ProviderSubcriptionCreated method.
 		ProviderSubcriptionCreated []struct {
 			// In1 is the in1 argument value.
-			In1 *providers.Provider
+			In1 providers.Provider
 		}
 		// ProviderSubcriptionFailed holds details about calls to the ProviderSubcriptionFailed method.
 		ProviderSubcriptionFailed []struct {
 			// In1 is the in1 argument value.
-			In1 *providers.Provider
+			In1 providers.Provider
+			// In2 is the in2 argument value.
+			In2 error
 		}
 		// ServerActionPublish holds details about calls to the ServerActionPublish method.
 		ServerActionPublish []struct {
@@ -409,12 +413,12 @@ func (mock *LoggerMock) GetStatsDCalls() []struct {
 }
 
 // ProviderConnectionCreated calls ProviderConnectionCreatedFunc.
-func (mock *LoggerMock) ProviderConnectionCreated(in1 *providers.Provider) {
+func (mock *LoggerMock) ProviderConnectionCreated(in1 providers.Provider) {
 	if mock.ProviderConnectionCreatedFunc == nil {
 		panic("moq: LoggerMock.ProviderConnectionCreatedFunc is nil but Logger.ProviderConnectionCreated was just called")
 	}
 	callInfo := struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 	}{
 		In1: in1,
 	}
@@ -428,10 +432,10 @@ func (mock *LoggerMock) ProviderConnectionCreated(in1 *providers.Provider) {
 // Check the length with:
 //     len(mockedLogger.ProviderConnectionCreatedCalls())
 func (mock *LoggerMock) ProviderConnectionCreatedCalls() []struct {
-	In1 *providers.Provider
+	In1 providers.Provider
 } {
 	var calls []struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 	}
 	lockLoggerMockProviderConnectionCreated.RLock()
 	calls = mock.calls.ProviderConnectionCreated
@@ -440,29 +444,33 @@ func (mock *LoggerMock) ProviderConnectionCreatedCalls() []struct {
 }
 
 // ProviderConnectionFailed calls ProviderConnectionFailedFunc.
-func (mock *LoggerMock) ProviderConnectionFailed(in1 *providers.Provider) {
+func (mock *LoggerMock) ProviderConnectionFailed(in1 providers.Provider, in2 error) {
 	if mock.ProviderConnectionFailedFunc == nil {
 		panic("moq: LoggerMock.ProviderConnectionFailedFunc is nil but Logger.ProviderConnectionFailed was just called")
 	}
 	callInfo := struct {
-		In1 *providers.Provider
+		In1 providers.Provider
+		In2 error
 	}{
 		In1: in1,
+		In2: in2,
 	}
 	lockLoggerMockProviderConnectionFailed.Lock()
 	mock.calls.ProviderConnectionFailed = append(mock.calls.ProviderConnectionFailed, callInfo)
 	lockLoggerMockProviderConnectionFailed.Unlock()
-	mock.ProviderConnectionFailedFunc(in1)
+	mock.ProviderConnectionFailedFunc(in1, in2)
 }
 
 // ProviderConnectionFailedCalls gets all the calls that were made to ProviderConnectionFailed.
 // Check the length with:
 //     len(mockedLogger.ProviderConnectionFailedCalls())
 func (mock *LoggerMock) ProviderConnectionFailedCalls() []struct {
-	In1 *providers.Provider
+	In1 providers.Provider
+	In2 error
 } {
 	var calls []struct {
-		In1 *providers.Provider
+		In1 providers.Provider
+		In2 error
 	}
 	lockLoggerMockProviderConnectionFailed.RLock()
 	calls = mock.calls.ProviderConnectionFailed
@@ -471,12 +479,12 @@ func (mock *LoggerMock) ProviderConnectionFailedCalls() []struct {
 }
 
 // ProviderMessagePublished calls ProviderMessagePublishedFunc.
-func (mock *LoggerMock) ProviderMessagePublished(in1 *providers.Provider, in2 *providers.Message) {
+func (mock *LoggerMock) ProviderMessagePublished(in1 providers.Provider, in2 *providers.Message) {
 	if mock.ProviderMessagePublishedFunc == nil {
 		panic("moq: LoggerMock.ProviderMessagePublishedFunc is nil but Logger.ProviderMessagePublished was just called")
 	}
 	callInfo := struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 		In2 *providers.Message
 	}{
 		In1: in1,
@@ -492,11 +500,11 @@ func (mock *LoggerMock) ProviderMessagePublished(in1 *providers.Provider, in2 *p
 // Check the length with:
 //     len(mockedLogger.ProviderMessagePublishedCalls())
 func (mock *LoggerMock) ProviderMessagePublishedCalls() []struct {
-	In1 *providers.Provider
+	In1 providers.Provider
 	In2 *providers.Message
 } {
 	var calls []struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 		In2 *providers.Message
 	}
 	lockLoggerMockProviderMessagePublished.RLock()
@@ -506,12 +514,12 @@ func (mock *LoggerMock) ProviderMessagePublishedCalls() []struct {
 }
 
 // ProviderSubcriptionCreated calls ProviderSubcriptionCreatedFunc.
-func (mock *LoggerMock) ProviderSubcriptionCreated(in1 *providers.Provider) {
+func (mock *LoggerMock) ProviderSubcriptionCreated(in1 providers.Provider) {
 	if mock.ProviderSubcriptionCreatedFunc == nil {
 		panic("moq: LoggerMock.ProviderSubcriptionCreatedFunc is nil but Logger.ProviderSubcriptionCreated was just called")
 	}
 	callInfo := struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 	}{
 		In1: in1,
 	}
@@ -525,10 +533,10 @@ func (mock *LoggerMock) ProviderSubcriptionCreated(in1 *providers.Provider) {
 // Check the length with:
 //     len(mockedLogger.ProviderSubcriptionCreatedCalls())
 func (mock *LoggerMock) ProviderSubcriptionCreatedCalls() []struct {
-	In1 *providers.Provider
+	In1 providers.Provider
 } {
 	var calls []struct {
-		In1 *providers.Provider
+		In1 providers.Provider
 	}
 	lockLoggerMockProviderSubcriptionCreated.RLock()
 	calls = mock.calls.ProviderSubcriptionCreated
@@ -537,29 +545,33 @@ func (mock *LoggerMock) ProviderSubcriptionCreatedCalls() []struct {
 }
 
 // ProviderSubcriptionFailed calls ProviderSubcriptionFailedFunc.
-func (mock *LoggerMock) ProviderSubcriptionFailed(in1 *providers.Provider) {
+func (mock *LoggerMock) ProviderSubcriptionFailed(in1 providers.Provider, in2 error) {
 	if mock.ProviderSubcriptionFailedFunc == nil {
 		panic("moq: LoggerMock.ProviderSubcriptionFailedFunc is nil but Logger.ProviderSubcriptionFailed was just called")
 	}
 	callInfo := struct {
-		In1 *providers.Provider
+		In1 providers.Provider
+		In2 error
 	}{
 		In1: in1,
+		In2: in2,
 	}
 	lockLoggerMockProviderSubcriptionFailed.Lock()
 	mock.calls.ProviderSubcriptionFailed = append(mock.calls.ProviderSubcriptionFailed, callInfo)
 	lockLoggerMockProviderSubcriptionFailed.Unlock()
-	mock.ProviderSubcriptionFailedFunc(in1)
+	mock.ProviderSubcriptionFailedFunc(in1, in2)
 }
 
 // ProviderSubcriptionFailedCalls gets all the calls that were made to ProviderSubcriptionFailed.
 // Check the length with:
 //     len(mockedLogger.ProviderSubcriptionFailedCalls())
 func (mock *LoggerMock) ProviderSubcriptionFailedCalls() []struct {
-	In1 *providers.Provider
+	In1 providers.Provider
+	In2 error
 } {
 	var calls []struct {
-		In1 *providers.Provider
+		In1 providers.Provider
+		In2 error
 	}
 	lockLoggerMockProviderSubcriptionFailed.RLock()
 	calls = mock.calls.ProviderSubcriptionFailed

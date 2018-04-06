@@ -18,7 +18,7 @@ func setTestEnv(key, val string) func() {
 func TestParsesConfigPipeHCL(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseHCLFile("../test_fixtures/pipe/standard.hcl")
+	c, err := ParseHCLFile("../test_fixtures/pipe/standard.hcl", nil)
 
 	is.NoErr(err)             // error should have been nil
 	is.Equal(1, len(c.Pipes)) // should have returned one pipe
@@ -27,7 +27,7 @@ func TestParsesConfigPipeHCL(t *testing.T) {
 func TestParsesConfigPipeHCLNoFail(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseHCLFile("../test_fixtures/pipe/no_fail.hcl")
+	c, err := ParseHCLFile("../test_fixtures/pipe/no_fail.hcl", nil)
 
 	is.NoErr(err)                                          // error should have been nil
 	is.Equal(1, len(c.Pipes))                              // should have returned one pipe
@@ -37,7 +37,7 @@ func TestParsesConfigPipeHCLNoFail(t *testing.T) {
 func TestParsesConfigPipeAndRetunsErrorWithInvalidExpiration(t *testing.T) {
 	is := is.New(t)
 
-	_, err := ParseHCLFile("../test_fixtures/pipe/invalid_expiration.bad")
+	_, err := ParseHCLFile("../test_fixtures/pipe/invalid_expiration.bad", nil)
 
 	is.True(err != nil) // should have returned an error
 }
@@ -45,7 +45,7 @@ func TestParsesConfigPipeAndRetunsErrorWithInvalidExpiration(t *testing.T) {
 func TestParsesConfigPipeHCLNoSuccess(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseHCLFile("../test_fixtures/pipe/no_success.hcl")
+	c, err := ParseHCLFile("../test_fixtures/pipe/no_success.hcl", nil)
 
 	is.NoErr(err)                                                // error should have been nil
 	is.Equal(1, len(c.Pipes))                                    // should have returned one pipe
@@ -55,7 +55,7 @@ func TestParsesConfigPipeHCLNoSuccess(t *testing.T) {
 func TestParsesFolder(t *testing.T) {
 	is := is.New(t)
 
-	c, err := ParseFolder("../test_fixtures")
+	c, err := ParseFolder("../test_fixtures", nil)
 
 	is.NoErr(err)               // error should have been nil
 	is.Equal(3, len(c.Pipes))   // should have returned three pipes
@@ -67,7 +67,7 @@ func TestParsesConfigContainingEnvironmentVariables(t *testing.T) {
 	is := is.New(t)
 	defer setTestEnv("abc", "123")()
 
-	c, err := ParseHCLFile("../test_fixtures/pipe/interpolation.hcl.env")
+	c, err := ParseHCLFile("../test_fixtures/pipe/interpolation.hcl.env", nil)
 
 	is.NoErr(err)                                 // error should have been nil
 	is.Equal("123", c.Pipes["environment"].Input) // should have set input to 123

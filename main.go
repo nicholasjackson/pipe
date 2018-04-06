@@ -39,12 +39,12 @@ func main() {
 }
 
 func loadConfig(l logger.Logger) *config.Config {
-	c, err := config.ParseFolder(*configFolder)
+	c, err := config.ParseFolder(*configFolder, l)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Loaded config: %#v\n", c)
+	log.Printf("Loaded config: %#v\n", c)
 
 	c.Pipes, err = config.SetupPipes(c, l)
 	if err != nil {

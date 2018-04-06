@@ -3,8 +3,6 @@ package config
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-go/statsd"
-	hclog "github.com/hashicorp/go-hclog"
 	"github.com/matryer/is"
 	"github.com/nicholasjackson/pipe/logger"
 	"github.com/nicholasjackson/pipe/pipe"
@@ -16,7 +14,7 @@ func buildConfig() (*Config, *providers.ProviderMock) {
 		ListenFunc: func() (<-chan *providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
-		SetupFunc: func(cp providers.ConnectionPool, logger hclog.Logger, stats *statsd.Client) error {
+		SetupFunc: func() error {
 			return nil
 		},
 		StopFunc: func() error {
@@ -69,8 +67,7 @@ func TestSetupPipesCallsSetupOnTheOutputProviders(t *testing.T) {
 
 	SetupPipes(c, l)
 
-	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
+	is.Equal(2, len(m.SetupCalls())) // should have called setup once
 }
 
 func TestSetupPipesCallsSetupOnTheInputProviders(t *testing.T) {
@@ -78,8 +75,7 @@ func TestSetupPipesCallsSetupOnTheInputProviders(t *testing.T) {
 
 	SetupPipes(c, l)
 
-	is.Equal(2, len(m.SetupCalls()))                                   // should have called setup once
-	is.Equal(c.ConnectionPools["mock_provider"], m.SetupCalls()[0].Cp) // should have passed the mock provider
+	is.Equal(2, len(m.SetupCalls())) // should have called setup once
 }
 
 func TestSetupPipesSetsTheCorrectInputProviderOnThePipe(t *testing.T) {

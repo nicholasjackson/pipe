@@ -17,15 +17,15 @@ func testGetLogger() *logger.LoggerMock {
 			s, _ := statsd.New("")
 			return s
 		},
-		ProviderConnectionCreatedFunc: func(in1 *providers.Provider) {
+		ProviderConnectionCreatedFunc: func(in1 providers.Provider) {
 		},
-		ProviderConnectionFailedFunc: func(in1 *providers.Provider) {
+		ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ProviderMessagePublishedFunc: func(in1 *providers.Provider, in2 *providers.Message) {
+		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message) {
 		},
-		ProviderSubcriptionCreatedFunc: func(in1 *providers.Provider) {
+		ProviderSubcriptionCreatedFunc: func(in1 providers.Provider) {
 		},
-		ProviderSubcriptionFailedFunc: func(in1 *providers.Provider) {
+		ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
 		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
 		},
