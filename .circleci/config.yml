@@ -1,26 +1,70 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
+  test:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/nicholasjackson/pipe
+    steps:
+      - checkout
+      - run: 
+          name: Run Unit tests
+          command: make test
+      - run:
+          name: Report code coverage
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+            make coverage
+            ./cc-test-reporter after-build -t gocov
+
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.9.1
-      
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
-    #### TEMPLATE_NOTE: go expects specific checkout path representing url
-    #### expecting it in the form of
-    ####   /go/src/github.com/circleci/go-tool
-    ####   /go/src/bitbucket.org/circleci/go-tool
-    working_directory: /go/src/github.com/nicholasjackson/faas-nats
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/nicholasjackson/pipe
     steps:
       - checkout
+      - run: make build
+  
+  nats_providertest:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/nicholasjackson/pipe
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Run functional tests for Nats.io provider
+          command: make test_nats_provider
+  
+  http_providertest:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.10
+    working_directory: /go/src/github.com/nicholasjackson/pipe
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: 
+          name: Run functional tests for HTTP provider
+          command: make test_http_provider
 
-      # specify any bash command here prefixed with `run: `
-      - run: go get ./...
-      - run: go test -v ./...
+workflows:
+  version: 2
+  pipe:
+    jobs:
+      - test
+
+      - build:
+          requires:
+            - test
+
+      - nats_providertest:
+          requires:
+            - build
+
+      - http_providertest:
+          requires:
+            - build

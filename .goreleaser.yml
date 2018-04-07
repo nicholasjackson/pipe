@@ -1,5 +1,5 @@
 builds:
-  - binary: faas-natsd
+  - binary: pipe
     ldflags: -s -w -X main.version={{.Version}}
     goos:
       - linux
@@ -13,16 +13,16 @@ builds:
 
 dockers:
   - 
-    binary: faas-natsd
-    image: quay.io/nicholasjackson/faas-nats
+    binary: pipe
+    image: quay.io/nicholasjackson/pipe
     goos: linux
     goarch: amd64
     dockerfile: Dockerfile
     latest: true
     tag_template: "{{ .Tag }}"
   - 
-    binary: faas-natsd
-    image: quay.io/nicholasjackson/faas-nats
+    binary: pipe
+    image: quay.io/nicholasjackson/pipe
     goos: linux
     goarch: arm
     goarm: 7

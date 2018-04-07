@@ -28,6 +28,7 @@ func (p *Parser) Parse(template string, data []byte) ([]byte, error) {
 		Funcs(gotemplate.FuncMap{
 			"base64encode": base64encode,
 			"base64decode": base64decode,
+			"tojson":       toJSON,
 		}).
 		Parse(template)
 

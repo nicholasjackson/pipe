@@ -41,3 +41,14 @@ func TestParserReturnsErrorWithBadTemplate(t *testing.T) {
 
 	is.True(err != nil) // expected error to be returned
 }
+
+func TestParserToJSON(t *testing.T) {
+	is, p := setupParser(t)
+
+	tmpl := `{ "message": {{ tojson .JSON.message }} }`
+
+	data, err := p.Parse(tmpl, []byte(`{"message": ["abc", 123]}`))
+
+	is.NoErr(err)                                        // expected no error to be returned
+	is.Equal(`{ "message": ["abc",123] }`, string(data)) // expected to correctly process data
+}

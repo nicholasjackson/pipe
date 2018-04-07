@@ -1,10 +1,10 @@
 FROM alpine
 
-RUN adduser -h /home/faasnats -D faasnats faasnats
+RUN adduser -h /home/pipe -D pipe pipe
 
-COPY ./faas-natsd /home/faasnats/
-RUN chmod +x /home/faasnats/faas-natsd
+COPY ./pipe/home/faasnats/
+RUN chmod +x /home/pipe/pipe
 
-USER faasnats
+USER pipe
 
-ENTRYPOINT ["/home/faasnats/faas-natsd"]
+ENTRYPOINT ["/home/pipe/pipe"]
