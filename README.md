@@ -1,68 +1,77 @@
-# Nats.io message listener for [OpenFaaS](https://github.com/openfaas/faas)
-[![Docker Repository on Quay](https://quay.io/repository/nicholasjackson/faas-nats/status "Docker Repository on Quay")](https://quay.io/repository/nicholasjackson/faas-nats)
-[![CircleCI](https://circleci.com/gh/nicholasjackson/faas-nats.svg?style=svg)](https://circleci.com/gh/nicholasjackson/faas-nats) 
+# Pipe - Event Grid and Message Router
+
+[![Docker Repository on Quay](https://quay.io/repository/nicholasjackson/faas-nats/status "Docker Repository on Quay")](https://quay.io/repository/nicholasjackson/pipe)
+[![CircleCI](https://circleci.com/gh/nicholasjackson/pipe.svg?style=svg)](https://circleci.com/gh/nicholasjackson/pipe) 
 [![Maintainability](https://api.codeclimate.com/v1/badges/a3c44667f431244a86ae/maintainability)](https://codeclimate.com/github/nicholasjackson/pipe/maintainability)
 
-This project allows you to listen to Nats.io messages and call OpenFaas functions.  To allow the OpenFaaS function to stay agnostic to the caller it is also possible to register payload transformation templates between the message format and the OpenFaaS function payload.
+This project allows you to listen to a variety of message sources and perform an action when a message is received.  The documentation and the project is currently work in progress however curretly supported providers are:
+* Nats.io - read and write to nats streaming
+* HTTP - receive and send events over http
 
-The listener runs as a standalone application and can be run as a Docker container alongside your OpenFaaS stack, you will also require `gnatsd` to be running.  Information for running nats with OpenFaaS can be found in the Asyncronous calls guide [https://github.com/openfaas/faas/blob/master/guide/asynchronous.md](https://github.com/openfaas/faas/blob/master/guide/asynchronous.md).  Note: this application is not intended to replace asyncronous calls but to allow for implementation of an Event Driven Architecural Pattern where OpenFaaS functions are the unit of work [https://en.wikipedia.org/wiki/Event-driven_architecture](https://en.wikipedia.org/wiki/Event-driven_architecture).
+The project is built around a provider model where plugable elements can be added to the server to allow support for a variety of message sources.
 
-Because the implementation uses Nats.io Subscription queues it is possible to run more than one instance of this application for high availability without suffering duplicate messages.  The message will be delivered to a random instance of faas-nats.
+Planned providers:
+* Log files - read and write to log files
+* SQS - AWS Simple Message Queue
+* PubSub - Google pub sub
+* Kafka
+* And more.
 
 ## Configuration
-To configure which messages to listen to and functions to call a simple YAML configuration file is used...
+To configure pipes HCL configuration file is used...
 
 ```yaml
-nats: nats://192.168.1.113:4222
-nats_cluster_id: test-cluster
-gateway: http://192.168.1.113:8080
-statsd: localhost:9125
-log_level: DEBUG # TRACE, ERROR, INFO
-log_format: text # json
-functions:
-    # name of the subscription, does not need to correspond to function name
-  - name: info
-    # function to call upon receipt of message
-    function_name: info
-    # message to listen to
-    message: example.info
+# Input block, will listen for nats messages on defined queue
+input "nats_queue" "nq_in" {
+  server = "nats://nats.service.consul:4222"
+  cluster_id = "test-cluster"
+  queue = "testmessagequeue"
+}
 
-    # any messages which are older than the expiration time will be ignored and not processed by the system
-    # expiration is expressed using Go's duration string format i.e 1000us, 300ms, 1s, 48h, 4d, 1h30m
-    expiration: 5s
- 
-  - name: echo
-    # function to call when an event is received, by default it sends the message
-    # payload as received unless a input_template is used
-    function_name: echo
-    message: example.echo
-    
-    # Transform the raw message with a Go template, assumes the payload is json
-    input_template: |
+# Output block, defines a http output
+output "http" "nq_out" {
+  protocol = "http"
+  server = "localhost"
+  port = 8080
+  path = "/message"
+}
+
+pipe "accept_nats" {
+  # Name of the input block
+  input = "nq_in"
+
+  # Do not handle messages older than
+  expiration = "1h"
+
+  # Action to perform when a new message is received
+  action {
+    # Name of the output
+    output = "nq_out"
+
+    # Transform the initial message
+    template = <<EOF
       {
-        "subject": "{{ .JSON.subject }}"
+        "text": "Hey a picture from selfi drone",
+        "image": "{{ .JSON.Data }}"
       }
+    EOF
 
-    # broadcast n number of messages on success of the function, by default this sends the payload
-    # as received unless an output template is used
-    success_messages: 
-      - example.info.success:
-        # Transform the raw message with a Go template, assumes the payload is json
-          output_template: |
-            {{printf "%s" .Raw}}
+  }
 
-      - example.detail.success:
-        # Transform the raw message with a Go template, assumes the payload is json
-          output_template: |
-            {{printf "%s" .Raw}}
+  # Called when action succeedes
+  on_success {
+    output = "success"
+  }
+ 
+  on_success {
+    output = "success"
+  }
 
-    # broadcast n number of messages on failure of the function, by default this sends the 
-    # original message payload as received unless an output template is used
-    failed_messages:
-      - example.info.failed:
-        # Transform the raw message with a Go template, assumes the payload is json
-          output_template: |
-            {{printf "%s" .Raw}}
+  # Called when the action fails
+  on_fail {
+    output = "fail"
+  }
+}
 ```
 
 ## Template values
@@ -115,41 +124,6 @@ input_template: |
   {{ tojson .JSON.Pets }}
 ```
 
-#### nats
-This is a string value with the connection string to your nats server
-
-#### nats_cluster_id
-The name of your nats cluster by default this is `test-cluster`
-
-#### gateway
-This is a string value corresponding to your OpenFaaS gateway
-
-#### functions
-Array of function objects
-
-#### function - name
-Name of the subscription, this should be unique and does not need to correspond to the function name
-
-#### function - function_name
-Name of the function to call when a message is received
-
-#### function - message
-Name of the Nats.io message to listen to
-
-#### function - success_message
-Optional string value, upon successful completion of the function call, a message can be broadcast containing the payload returned from the function
-
-#### function - templates
-Templates are optional and allow the transformation of the message payload into a function payload and the response from the function into the payload for the
-success message.
-All templates are in Go template format for more info on Go templates please see: [https://golang.org/pkg/text/template/](https://golang.org/pkg/text/template/)
-
-##### function - templates - output_template
-Go format template, before calling the OpenFaaS function the template will be used to process and transform the message
-
-##### function - templates - input_template
-Go format template, before publishing the success Nats.io message the template will be used to process and transform the message
-
 ## Metrics
 Metrics are exported using StatsD to import metrics into Prometheus please use the prometheus StatsD exporter [https://hub.docker.com/r/prom/statsd-exporter/](https://hub.docker.com/r/prom/statsd-exporter/)
 
@@ -158,9 +132,9 @@ To run the listener you can use the build docker container and provide a configu
 
 ```bash
 docker run -it \
-  -v $(shell pwd)/example_config.yml:/etc/faas-nats/example_config.yml \
+  -v $(shell pwd)/examples:/etc/config \
   quay.io/nicholasjackson/faas-nats:latest \
-  -config /etc/faas-nats/example_config.yml
+  -config /etc/config/examples
 ```
 
 ## Testing
@@ -168,4 +142,6 @@ There is a simple test harness in ./testharness/main.go which can be used to val
 
 ## TODO
 [x] Implement monitoring and metrics with StatsD  
-[ ] Handle message wrapping to enable chainging OpenFaaS functions
+[ ] Finish documentation
+[ ] Write more examples
+[ ] Finish basic provider implementation
