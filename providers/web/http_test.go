@@ -52,7 +52,7 @@ func setupHTTPProvider(t *testing.T, direction string) (*is.I, *HTTPProvider, *C
 	}
 
 	mockedConnectionPool := &ConnectionPoolMock{
-		GetConnectionFunc: func(server string, port int) (Connection, error) {
+		GetConnectionFunc: func(server string, port int, log logger.Logger) (Connection, error) {
 			return mockedConnection, nil
 		},
 	}

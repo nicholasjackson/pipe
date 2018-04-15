@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/nicholasjackson/pipe/logger"
 )
 
 //go:generate moq -out mock_connection.go . Connection
@@ -22,22 +23,26 @@ type Connection interface {
 type HTTPConnection struct {
 	server *http.Server
 	router *mux.Router
+	log    logger.Logger
 }
 
 // NewHTTPConnection creates a new connection and bind to the given address and port
-func NewHTTPConnection(bindAddr string, port int) Connection {
-	r := mux.NewRouter()
-	r.HandleFunc("/_health", healthHandler)
+func NewHTTPConnection(bindAddr string, port int, logger logger.Logger) Connection {
+	c := &HTTPConnection{}
+	c.log = logger
 
-	s := &http.Server{
+	r := mux.NewRouter()
+	r.NotFoundHandler = http.HandlerFunc(c.notFoundHandler)
+	r.HandleFunc("/_health", c.healthHandler)
+
+	c.router = r
+
+	c.server = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", bindAddr, port),
 		Handler: r,
 	}
 
-	return &HTTPConnection{
-		server: s,
-		router: r,
-	}
+	return c
 }
 
 // ListenAndServe calls the http.Server ListenAndServe method
@@ -76,7 +81,14 @@ func (h *HTTPConnection) Shutdown(ctx context.Context) {
 	h.server.Shutdown(ctx)
 }
 
-func healthHandler(rw http.ResponseWriter, r *http.Request) {
+func (h *HTTPConnection) healthHandler(rw http.ResponseWriter, r *http.Request) {
 	ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
+}
+
+func (h *HTTPConnection) notFoundHandler(rw http.ResponseWriter, r *http.Request) {
+	ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	h.log.GetLogger().Error("Path not found", "url", r.URL.String(), "path", r.URL.RawPath)
 }

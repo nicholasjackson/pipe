@@ -4,6 +4,7 @@
 package web
 
 import (
+	"github.com/nicholasjackson/pipe/logger"
 	"sync"
 )
 
@@ -17,7 +18,7 @@ var (
 //
 //         // make and configure a mocked ConnectionPool
 //         mockedConnectionPool := &ConnectionPoolMock{
-//             GetConnectionFunc: func(bindAddr string, port int) (Connection, error) {
+//             GetConnectionFunc: func(bindAddr string, port int, log logger.Logger) (Connection, error) {
 // 	               panic("TODO: mock out the GetConnection method")
 //             },
 //         }
@@ -28,7 +29,7 @@ var (
 //     }
 type ConnectionPoolMock struct {
 	// GetConnectionFunc mocks the GetConnection method.
-	GetConnectionFunc func(bindAddr string, port int) (Connection, error)
+	GetConnectionFunc func(bindAddr string, port int, log logger.Logger) (Connection, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -38,26 +39,30 @@ type ConnectionPoolMock struct {
 			BindAddr string
 			// Port is the port argument value.
 			Port int
+			// Log is the log argument value.
+			Log logger.Logger
 		}
 	}
 }
 
 // GetConnection calls GetConnectionFunc.
-func (mock *ConnectionPoolMock) GetConnection(bindAddr string, port int) (Connection, error) {
+func (mock *ConnectionPoolMock) GetConnection(bindAddr string, port int, log logger.Logger) (Connection, error) {
 	if mock.GetConnectionFunc == nil {
 		panic("moq: ConnectionPoolMock.GetConnectionFunc is nil but ConnectionPool.GetConnection was just called")
 	}
 	callInfo := struct {
 		BindAddr string
 		Port     int
+		Log      logger.Logger
 	}{
 		BindAddr: bindAddr,
 		Port:     port,
+		Log:      log,
 	}
 	lockConnectionPoolMockGetConnection.Lock()
 	mock.calls.GetConnection = append(mock.calls.GetConnection, callInfo)
 	lockConnectionPoolMockGetConnection.Unlock()
-	return mock.GetConnectionFunc(bindAddr, port)
+	return mock.GetConnectionFunc(bindAddr, port, log)
 }
 
 // GetConnectionCalls gets all the calls that were made to GetConnection.
@@ -66,10 +71,12 @@ func (mock *ConnectionPoolMock) GetConnection(bindAddr string, port int) (Connec
 func (mock *ConnectionPoolMock) GetConnectionCalls() []struct {
 	BindAddr string
 	Port     int
+	Log      logger.Logger
 } {
 	var calls []struct {
 		BindAddr string
 		Port     int
+		Log      logger.Logger
 	}
 	lockConnectionPoolMockGetConnection.RLock()
 	calls = mock.calls.GetConnection

@@ -15,7 +15,7 @@ import (
 func setupHTTPConnection(t *testing.T) (*is.I, Connection, int, func()) {
 	is := is.New(t)
 	port := rand.Intn(10000) + 50000 // generate random port between 50000 - 60000
-	c := NewHTTPConnection("localhost", port)
+	c := NewHTTPConnection("localhost", port, nil)
 
 	go c.ListenAndServe()
 	time.Sleep(10 * time.Millisecond)

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/matryer/is"
+	"github.com/nicholasjackson/pipe/logger"
 )
 
 func setupPoolTests(t *testing.T) (*is.I, *HTTPConnectionPool, *ConnectionMock) {
@@ -35,7 +36,7 @@ func setupPoolTests(t *testing.T) (*is.I, *HTTPConnectionPool, *ConnectionMock) 
 	p.healthCheckInterval = 1 * time.Millisecond
 
 	// replace the connection factory with one returning our mock
-	p.connectionFactory = func(httpAddr string, port int) Connection {
+	p.connectionFactory = func(httpAddr string, port int, logger logger.Logger) Connection {
 		return cm
 	}
 
@@ -45,7 +46,7 @@ func setupPoolTests(t *testing.T) (*is.I, *HTTPConnectionPool, *ConnectionMock) 
 func TestCreatesNewConnectionFromEmptyPool(t *testing.T) {
 	is, p, cm := setupPoolTests(t)
 
-	c, err := p.GetConnection("localhost", 8080)
+	c, err := p.GetConnection("localhost", 8080, nil)
 
 	is.NoErr(err)                              // should not have returned an error
 	is.Equal(c, cm)                            // should have created a new server
@@ -55,10 +56,10 @@ func TestCreatesNewConnectionFromEmptyPool(t *testing.T) {
 func TestGetsExistingConnectionFromPool(t *testing.T) {
 	is, p, cm := setupPoolTests(t)
 
-	c1, err := p.GetConnection("localhost", 8080)
+	c1, err := p.GetConnection("localhost", 8080, nil)
 	is.NoErr(err) // should not have returned an error
 
-	c2, err := p.GetConnection("localhost", 8080)
+	c2, err := p.GetConnection("localhost", 8080, nil)
 	is.NoErr(err) // should not have returned an error
 
 	is.True(c1 != nil)                         // connection should not be nil
@@ -76,7 +77,7 @@ func TestReturnsErrorIfBindNotPossible(t *testing.T) {
 		return fmt.Errorf("Unhealthy")
 	}
 
-	_, err := p.GetConnection("localhost", 8080)
+	_, err := p.GetConnection("localhost", 8080, nil)
 
 	is.Equal("Unable to start", err.Error()) // should have returned an error
 }
@@ -87,7 +88,7 @@ func TestReturnsErrorOnNewConnectionFailedHealthCheck(t *testing.T) {
 		return fmt.Errorf("Unhealthy")
 	}
 
-	_, err := p.GetConnection("localhost", 8080)
+	_, err := p.GetConnection("localhost", 8080, nil)
 
 	is.True(err != nil)                                       // should have returned an error
 	is.Equal("Error starting server: Unhealthy", err.Error()) // should have returned an error
@@ -99,7 +100,7 @@ func TestCallsHealthCheckEqualTohealthCheckMax(t *testing.T) {
 		return fmt.Errorf("Unhealthy")
 	}
 
-	p.GetConnection("localhost", 8080)
+	p.GetConnection("localhost", 8080, nil)
 
 	is.Equal(10, len(cm.CheckHealthCalls())) // should have called the health check 10 times
 }

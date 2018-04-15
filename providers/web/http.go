@@ -64,7 +64,7 @@ func (h *HTTPProvider) Setup() error {
 	}
 
 	h.msgChannel = make(chan *providers.Message, 1)
-	c, err := h.pool.GetConnection(h.Server, h.Port)
+	c, err := h.pool.GetConnection(h.Server, h.Port, h.log)
 	if err != nil {
 		h.log.ProviderConnectionFailed(h, err)
 		return err

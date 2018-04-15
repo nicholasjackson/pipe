@@ -29,7 +29,7 @@ run_docker:
 	docker run -it -v $(shell pwd)/example_config.yml:/etc/pipe/example_config.yml ${NAMESPACE}/pipe:latest -config /etc/pipe/example_config.yml
 
 build_all:
-	goreleaser -snapshot -rm-dist -skip-validate
+	goreleaser --snapshot --rm-dist --skip-validate
 
 goconvey:
 	goconvey -excludedDirs "test_functional,vendor"
