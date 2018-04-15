@@ -24,7 +24,7 @@ func (l *LoggerImpl) ServerNoPipesConfigured(p providers.Provider) {
 // Stop to ensure timing data is submitted to the logs i.e: defer p.logger.ServerStartNewMessageReceived(p, m).Stop()
 func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m *providers.Message) *LoggerTiming {
 	l.logger.Info("Recieved message", "pipe", pi.Name)
-	l.logger.Debug("Message data", "message", pretty.Sprint(m))
+	l.logger.Debug("Message data", "message", pretty.Sprint(m), "data", string(m.Data))
 
 	// time the length of the message handling
 	st := time.Now()
@@ -58,7 +58,7 @@ func (l *LoggerImpl) ServerActionPublishFailed(pi *pipe.Pipe, m *providers.Messa
 // ServerActionPublishSuccess logs that publishing a message was succcessful
 func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m *providers.Message) {
 	l.logger.Info("Publish message action succeded", "pipe", pi.Name, "output", pi.Action.Output)
-	l.logger.Debug("Message data", "message", pretty.Sprint(m))
+	l.logger.Debug("Message data", "message", pretty.Sprint(m), "data", string(m.Data))
 
 	l.stats.Incr("handler.message.action.publish.success", []string{"pipe:" + pi.Name}, 1)
 }
@@ -104,9 +104,11 @@ func (l *LoggerImpl) ServerFailPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m *
 func (l *LoggerImpl) ServerTemplateProcessStart(a *pipe.Action, data []byte) *LoggerTiming {
 	l.logger.Info("Transform output template", "output", a.Output, "template", a.Template)
 	l.logger.Debug(
-		"Transform output template", "output",
-		a.Output, "template", a.Template,
+		"Transform output template",
+		"output", a.Output,
+		"template", a.Template,
 		"data", pretty.Sprint(data),
+		"data string", string(data),
 	)
 
 	// time the length of the message handling
@@ -121,12 +123,12 @@ func (l *LoggerImpl) ServerTemplateProcessStart(a *pipe.Action, data []byte) *Lo
 
 // ServerTemplateProcessFail logs that a template has failed to process
 func (l *LoggerImpl) ServerTemplateProcessFail(a *pipe.Action, data []byte, err error) {
-	l.logger.Error("Error processing output template", "output", a.Output, "error", err)
+	l.logger.Error("Error processing output template", "output", a.Output, "error", err, "template")
 	l.stats.Incr("handler.message.template.failed", []string{"output:" + a.Output}, 1)
 }
 
 // ServerTemplateProcessSuccess logs that a template has processed successfully
 func (l *LoggerImpl) ServerTemplateProcessSuccess(a *pipe.Action, data []byte) {
 	l.stats.Incr("handler.message.template.success", []string{"output:" + a.Output}, 1)
-	l.logger.Debug("Transformed input template", "output", a.Output, "template")
+	l.logger.Debug("Transformed input template", "output", a.Output, "template", a.Template, "data", string(data))
 }

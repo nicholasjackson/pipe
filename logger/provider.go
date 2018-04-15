@@ -1,6 +1,9 @@
 package logger
 
-import "github.com/nicholasjackson/pipe/providers"
+import (
+	"github.com/kr/pretty"
+	"github.com/nicholasjackson/pipe/providers"
+)
 
 func (l *LoggerImpl) ProviderConnectionFailed(p providers.Provider, err error) {
 	l.stats.Incr("provider.connection.failed", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
@@ -26,5 +29,5 @@ func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers
 	l.stats.Incr("provider.publish.call", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
 	l.logger.Info("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type())
 
-	l.logger.Debug("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), "message", m)
+	l.logger.Debug("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), "message", pretty.Sprint(m), "data", string(m.Data))
 }
