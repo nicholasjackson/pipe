@@ -31,6 +31,9 @@ run_docker:
 build_all:
 	goreleaser --snapshot --rm-dist --skip-validate
 
+build_release:
+	goreleaser --rm-dist
+
 goconvey:
 	goconvey -excludedDirs "test_functional,vendor"
 
