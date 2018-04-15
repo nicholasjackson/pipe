@@ -3,6 +3,7 @@ package logger
 import (
 	"time"
 
+	"github.com/kr/pretty"
 	"github.com/nicholasjackson/pipe/pipe"
 	"github.com/nicholasjackson/pipe/providers"
 )
@@ -23,7 +24,7 @@ func (l *LoggerImpl) ServerNoPipesConfigured(p providers.Provider) {
 // Stop to ensure timing data is submitted to the logs i.e: defer p.logger.ServerStartNewMessageReceived(p, m).Stop()
 func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m *providers.Message) *LoggerTiming {
 	l.logger.Info("Recieved message", "pipe", pi.Name)
-	l.logger.Debug("Message data", "message", m)
+	l.logger.Debug("Message data", "message", pretty.Sprint(m))
 
 	// time the length of the message handling
 	st := time.Now()
@@ -57,7 +58,7 @@ func (l *LoggerImpl) ServerActionPublishFailed(pi *pipe.Pipe, m *providers.Messa
 // ServerActionPublishSuccess logs that publishing a message was succcessful
 func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m *providers.Message) {
 	l.logger.Info("Publish message action succeded", "pipe", pi.Name, "output", pi.Action.Output)
-	l.logger.Debug("Message data", "message", m)
+	l.logger.Debug("Message data", "message", pretty.Sprint(m))
 
 	l.stats.Incr("handler.message.action.publish.success", []string{"pipe:" + pi.Name}, 1)
 }
@@ -102,7 +103,11 @@ func (l *LoggerImpl) ServerFailPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m *
 // of the process the user must called the returned Stop function e.g: defer p.logger.ServerTemplateProcessStart.Stop()
 func (l *LoggerImpl) ServerTemplateProcessStart(a *pipe.Action, data []byte) *LoggerTiming {
 	l.logger.Info("Transform output template", "output", a.Output, "template", a.Template)
-	l.logger.Debug("Transform output template", "output", a.Output, "template", a.Template, "data", data)
+	l.logger.Debug(
+		"Transform output template", "output",
+		a.Output, "template", a.Template,
+		"data", pretty.Sprint(data),
+	)
 
 	// time the length of the message handling
 	st := time.Now()

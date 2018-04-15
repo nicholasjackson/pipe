@@ -87,8 +87,8 @@ func (h *HTTPConnection) healthHandler(rw http.ResponseWriter, r *http.Request) 
 }
 
 func (h *HTTPConnection) notFoundHandler(rw http.ResponseWriter, r *http.Request) {
-	ioutil.ReadAll(r.Body)
+	data, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 
-	h.log.GetLogger().Error("Path not found", "url", r.URL.String(), "path", r.URL.RawPath)
+	h.log.GetLogger().Error("Path not found", "url", r.URL.String(), "path", r.URL.RawPath, "data", string(data))
 }
