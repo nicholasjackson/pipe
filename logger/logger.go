@@ -34,7 +34,7 @@ type ProviderLogger interface {
 	ProviderConnectionCreated(providers.Provider)
 	ProviderSubcriptionFailed(providers.Provider, error)
 	ProviderSubcriptionCreated(providers.Provider)
-	ProviderMessagePublished(providers.Provider, *providers.Message)
+	ProviderMessagePublished(providers.Provider, *providers.Message, ...interface{})
 }
 
 //go:generate moq -out mock_logger.go . Logger

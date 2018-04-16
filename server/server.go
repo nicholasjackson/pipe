@@ -109,11 +109,11 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 	msg.Data = data
 	msg.ParentID = m.ID
 
-	p.logger.ServerActionPublish(pi, m)
+	p.logger.ServerActionPublish(pi, &msg)
 
 	_, err = pi.Action.OutputProvider.Publish(msg)
 	if err != nil {
-		p.logger.ServerActionPublishFailed(pi, m, err)
+		p.logger.ServerActionPublishFailed(pi, &msg, err)
 		p.publishFail(pi, m)
 
 		return

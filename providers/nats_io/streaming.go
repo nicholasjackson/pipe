@@ -85,7 +85,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 
 // Publish a message to the configured outbound queue
 func (sp *StreamingProvider) Publish(msg providers.Message) (providers.Message, error) {
-	sp.log.ProviderMessagePublished(sp, &msg)
+	sp.log.ProviderMessagePublished(sp, &msg, []interface{}{"queue", sp.Queue}...)
 
 	return providers.Message{}, sp.connection.Publish(sp.Queue, msg.Data)
 }

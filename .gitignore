@@ -1,3 +1,4 @@
 faas-nats
 dist
 .envrc
+pipe-server

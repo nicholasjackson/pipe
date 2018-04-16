@@ -25,9 +25,9 @@ func (l *LoggerImpl) ProviderSubcriptionCreated(p providers.Provider) {
 	l.logger.Info("Created subscription for", "provider", p.Name(), "type", p.Type())
 }
 
-func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers.Message) {
+func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers.Message, args ...interface{}) {
 	l.stats.Incr("provider.publish.call", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
-	l.logger.Info("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type())
+	l.logger.Info("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), args)
 
 	l.logger.Debug("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), "message", pretty.Sprint(m), "data", string(m.Data))
 }
