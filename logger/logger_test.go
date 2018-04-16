@@ -8,7 +8,7 @@ import (
 )
 
 func TestProviderMessagePublishedAcceptsArgs(t *testing.T) {
-	l := New(hclog.Default(), nil)
+	l := New(hclog.New(&hclog.LoggerOptions{Level: hclog.Debug}), nil)
 
 	mockedProvider := &providers.ProviderMock{
 		NameFunc: func() string {
@@ -21,5 +21,6 @@ func TestProviderMessagePublishedAcceptsArgs(t *testing.T) {
 
 	msg := &providers.Message{}
 
-	l.ProviderMessagePublished(mockedProvider, msg, "abc", 123)
+	args := []interface{}{"queue", "test_queue"}
+	l.ProviderMessagePublished(mockedProvider, msg, args...)
 }

@@ -36,10 +36,10 @@ func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers
 
 	infoArgs = append(infoArgs, args...)
 
-	debugArgs := append(infoArgs, []interface{}{
+	debugArgs := append(infoArgs,
 		"message", pretty.Sprint(m),
 		"data", string(m.Data),
-	})
+	)
 
 	l.stats.Incr("provider.publish.call", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
 	l.logger.Info("Publishing message", infoArgs...)
