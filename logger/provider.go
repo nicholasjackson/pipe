@@ -26,8 +26,22 @@ func (l *LoggerImpl) ProviderSubcriptionCreated(p providers.Provider) {
 }
 
 func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers.Message, args ...interface{}) {
-	l.stats.Incr("provider.publish.call", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
-	l.logger.Info("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), args)
+	// concatonate custom args for logger
+	infoArgs := []interface{}{
+		"id", m.ID,
+		"parentid", m.ParentID,
+		"provider", p.Name(),
+		"type", p.Type(),
+	}
 
-	l.logger.Debug("Publishing message", "id", m.ID, "parentid", m.ParentID, "provider", p.Name(), "type", p.Type(), "message", pretty.Sprint(m), "data", string(m.Data))
+	infoArgs = append(infoArgs, args...)
+
+	debugArgs := append(infoArgs, []interface{}{
+		"message", pretty.Sprint(m),
+		"data", string(m.Data),
+	})
+
+	l.stats.Incr("provider.publish.call", []string{"provider:" + p.Name(), "type:" + p.Type()}, 1)
+	l.logger.Info("Publishing message", infoArgs...)
+	l.logger.Debug("Publishing message", debugArgs...)
 }

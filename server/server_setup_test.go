@@ -92,7 +92,7 @@ func createMocks(m *serverTest) *serverTest {
 		},
 		ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message) {
+		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message, in3 ...interface{}) {
 		},
 		ProviderSubcriptionCreatedFunc: func(in1 providers.Provider) {
 		},
