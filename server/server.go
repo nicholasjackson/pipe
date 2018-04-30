@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -111,7 +112,7 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 
 	p.logger.ServerActionPublish(pi, &msg)
 
-	_, err = pi.Action.OutputProvider.Publish(msg)
+	resp, err := pi.Action.OutputProvider.Publish(msg)
 	if err != nil {
 		p.logger.ServerActionPublishFailed(pi, &msg, err)
 		p.publishFail(pi, m)
@@ -119,9 +120,11 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 		return
 	}
 
+	log.Println(resp)
+
 	p.logger.ServerActionPublishSuccess(pi, m)
 
-	p.publishSuccess(pi, m)
+	p.publishSuccess(pi, &resp)
 }
 
 func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {

@@ -1,6 +1,8 @@
 package server
 
 import (
+	"time"
+
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/nicholasjackson/pipe/config"
@@ -26,7 +28,10 @@ func createMocks(m *serverTest) *serverTest {
 			return m.inputChan, nil
 		},
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, nil
+			return providers.Message{
+				Timestamp: time.Now().UnixNano(),
+				Data:      []byte(`{ "name": "publishreturn" }`),
+			}, nil
 		},
 		SetupFunc: func() error {
 			return nil
