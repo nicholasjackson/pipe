@@ -99,6 +99,12 @@ func (sp *StreamingProvider) Stop() error {
 }
 
 func (sp *StreamingProvider) messageHandler(msg *stan.Msg) {
+	sp.log.GetLogger().Info("Acknowledge receipt", "id", msg.CRC32)
+	err := msg.Ack()
+	if err != nil {
+		sp.log.GetLogger().Error("Error acknowledging receipt", "error", err)
+	}
+
 	m := providers.NewMessage()
 
 	m.Data = msg.Data
