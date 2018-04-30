@@ -125,28 +125,29 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 
 func (p *PipeServer) publishSuccess(pi *pipe.Pipe, m *providers.Message) {
 	// process success messages
-	for _, a := range pi.OnSuccess {
-		go func(pi *pipe.Pipe, a *pipe.Action, m *providers.Message) {
-			p.logger.ServerSuccessPublish(pi, a, m)
+	for _, action := range pi.OnSuccess {
+		go func(pi *pipe.Pipe, a pipe.Action, m *providers.Message) {
+			p.logger.ServerSuccessPublish(pi, &a, m)
 
 			// transform data if necessary
-			data, err := p.processOutputTemplate(*a, m.Data)
+			data, err := p.processOutputTemplate(a, m.Data)
 			if err != nil {
-				p.logger.ServerSuccessPublishFailed(pi, a, m, err)
+				p.logger.ServerSuccessPublishFailed(pi, &a, m, err)
 				return
 			}
+
 			msg := providers.NewMessage()
 			msg.ParentID = m.ID
 			msg.Data = data
 
 			_, err = a.OutputProvider.Publish(msg)
 			if err != nil {
-				p.logger.ServerSuccessPublishFailed(pi, a, &msg, err)
+				p.logger.ServerSuccessPublishFailed(pi, &a, &msg, err)
 				return
 			}
 
-			p.logger.ServerSuccessPublishSuccess(pi, a, &msg)
-		}(pi, &a, m)
+			p.logger.ServerSuccessPublishSuccess(pi, &a, &msg)
+		}(pi, action, m)
 	}
 }
 
