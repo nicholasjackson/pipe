@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -120,10 +119,7 @@ func (p *PipeServer) handleMessage(pi *pipe.Pipe, m *providers.Message) {
 		return
 	}
 
-	log.Println(resp)
-
-	p.logger.ServerActionPublishSuccess(pi, m)
-
+	p.logger.ServerActionPublishSuccess(pi, &msg)
 	p.publishSuccess(pi, &resp)
 }
 

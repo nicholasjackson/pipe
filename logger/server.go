@@ -43,7 +43,6 @@ func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m *providers.M
 		"Message data",
 		"action", "server_new_message_received",
 		"message", pretty.Sprint(m),
-		"data", string(m.Data),
 	)
 
 	// time the length of the message handling
@@ -109,7 +108,6 @@ func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m *providers.Mess
 		"Message data",
 		"action", "server_action_publish_success",
 		"message", pretty.Sprint(m),
-		"data", string(m.Data),
 	)
 
 	l.stats.Incr("handler.message.action.publish.success", []string{"pipe:" + pi.Name}, 1)
@@ -129,7 +127,6 @@ func (l *LoggerImpl) ServerSuccessPublish(pi *pipe.Pipe, a *pipe.Action, m *prov
 		"Message data",
 		"action", "server_success_publish",
 		"message", pretty.Sprint(m),
-		"data", string(m.Data),
 	)
 }
 
@@ -141,7 +138,7 @@ func (l *LoggerImpl) ServerSuccessPublishFailed(pi *pipe.Pipe, a *pipe.Action, m
 		"pipe", pi.Name,
 		"output", a.Output,
 		"error", err,
-		"message", m,
+		"message", pretty.Sprint(m),
 	)
 	l.stats.Incr("handler.message.success.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
 }
@@ -176,7 +173,7 @@ func (l *LoggerImpl) ServerFailPublishFailed(pi *pipe.Pipe, a *pipe.Action, m *p
 		"pipe", pi.Name,
 		"output", a.Output,
 		"error", err,
-		"message", m,
+		"message", pretty.Sprint(m),
 	)
 	l.stats.Incr("handler.message.fail.publish.failed", []string{"pipe:" + pi.Name, "output:" + a.Output}, 1)
 }
@@ -207,7 +204,6 @@ func (l *LoggerImpl) ServerTemplateProcessStart(a *pipe.Action, data []byte) *Lo
 		"output", a.Output,
 		"template", a.Template,
 		"data", pretty.Sprint(data),
-		"data string", string(data),
 	)
 
 	// time the length of the message handling
@@ -240,6 +236,6 @@ func (l *LoggerImpl) ServerTemplateProcessSuccess(a *pipe.Action, data []byte) {
 		"action", "server_template_process_success",
 		"output", a.Output,
 		"template", a.Template,
-		"data", string(data),
+		"data", pretty.Sprint(data),
 	)
 }
