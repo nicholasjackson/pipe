@@ -26,7 +26,7 @@ type HTTPProvider struct {
 	pool       ConnectionPool
 	connection Connection
 	log        logger.Logger
-	msgChannel chan *providers.Message
+	msgChannel chan providers.Message
 }
 
 func NewHTTPProvider(
@@ -63,7 +63,7 @@ func (h *HTTPProvider) Setup() error {
 		return nil
 	}
 
-	h.msgChannel = make(chan *providers.Message, 1)
+	h.msgChannel = make(chan providers.Message, 1)
 	c, err := h.pool.GetConnection(h.Server, h.Port, h.log)
 	if err != nil {
 		h.log.ProviderConnectionFailed(h, err)
@@ -76,7 +76,7 @@ func (h *HTTPProvider) Setup() error {
 	return nil
 }
 
-func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
+func (h *HTTPProvider) Listen() (<-chan providers.Message, error) {
 	// do not listen if this is an ouput provider
 	if h.direction == providers.DirectionOutput {
 		return nil, nil
@@ -95,7 +95,7 @@ func (h *HTTPProvider) Listen() (<-chan *providers.Message, error) {
 }
 
 func (h *HTTPProvider) Publish(msg providers.Message) (providers.Message, error) {
-	h.log.ProviderMessagePublished(h, &msg)
+	h.log.ProviderMessagePublished(h, msg)
 
 	url := fmt.Sprintf("%s://%s:%d%s", h.Protocol, h.Server, h.Port, h.Path)
 	resp, err := http.Post(url, "text/plain", bytes.NewReader(msg.Data))
@@ -134,5 +134,5 @@ func (h *HTTPProvider) messageHandler(rw http.ResponseWriter, r *http.Request) {
 	m.Sequence = 1
 	m.Timestamp = time.Now().UnixNano()
 
-	h.msgChannel <- &m
+	h.msgChannel <- m
 }

@@ -19,7 +19,7 @@ func TestProviderMessagePublishedAcceptsArgs(t *testing.T) {
 		},
 	}
 
-	msg := &providers.Message{}
+	msg := providers.Message{}
 
 	args := []interface{}{"queue", "test_queue"}
 	l.ProviderMessagePublished(mockedProvider, msg, args...)

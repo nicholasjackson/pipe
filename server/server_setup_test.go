@@ -1,8 +1,6 @@
 package server
 
 import (
-	"time"
-
 	"github.com/DataDog/datadog-go/statsd"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/nicholasjackson/pipe/config"
@@ -14,7 +12,7 @@ import (
 type serverTest struct {
 	config                    *config.Config
 	pipeServer                *PipeServer
-	inputChan                 chan *providers.Message
+	inputChan                 chan providers.Message
 	mockedInputProvider       *providers.ProviderMock
 	mockedOutputProvider      *providers.ProviderMock
 	mockedSuccessFailProvider *providers.ProviderMock
@@ -24,14 +22,11 @@ type serverTest struct {
 
 func createMocks(m *serverTest) *serverTest {
 	m.mockedInputProvider = &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
+		ListenFunc: func() (<-chan providers.Message, error) {
 			return m.inputChan, nil
 		},
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{
-				Timestamp: time.Now().UnixNano(),
-				Data:      []byte(`{ "name": "publishreturn" }`),
-			}, nil
+			return providers.Message{ID: "abc123"}, nil
 		},
 		SetupFunc: func() error {
 			return nil
@@ -48,11 +43,11 @@ func createMocks(m *serverTest) *serverTest {
 	}
 
 	m.mockedOutputProvider = &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
+		ListenFunc: func() (<-chan providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, nil
+			return providers.Message{ID: "abc123"}, nil
 		},
 		SetupFunc: func() error {
 			return nil
@@ -66,11 +61,11 @@ func createMocks(m *serverTest) *serverTest {
 	}
 
 	m.mockedSuccessFailProvider = &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
+		ListenFunc: func() (<-chan providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
 		PublishFunc: func(in1 providers.Message) (providers.Message, error) {
-			return providers.Message{}, nil
+			return providers.Message{ID: "abc123"}, nil
 		},
 		SetupFunc: func() error {
 			return nil
@@ -97,38 +92,38 @@ func createMocks(m *serverTest) *serverTest {
 		},
 		ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message, in3 ...interface{}) {
+		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 providers.Message, in3 ...interface{}) {
 		},
 		ProviderSubcriptionCreatedFunc: func(in1 providers.Provider) {
 		},
 		ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 *providers.Message, in3 error) {
+		ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 providers.Message, in3 error) {
 		},
-		ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+		ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 		},
-		ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 *providers.Message) *logger.LoggerTiming {
+		ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 providers.Message) *logger.LoggerTiming {
 			return &logger.LoggerTiming{
 				Stop: func() {},
 			}
 		},
 		ServerNoPipesConfiguredFunc: func(in1 providers.Provider) {
 		},
-		ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+		ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 		},
-		ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
 		ServerTemplateProcessFailFunc: func(in1 *pipe.Action, in2 []byte, in3 error) {
 		},

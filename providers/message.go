@@ -1,6 +1,10 @@
 package providers
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Message struct {
 	// ID is a random message ID
@@ -24,8 +28,9 @@ type Message struct {
 
 func NewMessage() Message {
 	return Message{
-		ID:       generateRandomMessageID(),
-		Metadata: make(map[string]string),
+		ID:        generateRandomMessageID(),
+		Timestamp: time.Now().UnixNano(),
+		Metadata:  make(map[string]string),
 	}
 }
 

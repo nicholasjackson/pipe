@@ -26,7 +26,7 @@ var (
 //             DirectionFunc: func() string {
 // 	               panic("TODO: mock out the Direction method")
 //             },
-//             ListenFunc: func() (<-chan *Message, error) {
+//             ListenFunc: func() (<-chan Message, error) {
 // 	               panic("TODO: mock out the Listen method")
 //             },
 //             NameFunc: func() string {
@@ -55,7 +55,7 @@ type ProviderMock struct {
 	DirectionFunc func() string
 
 	// ListenFunc mocks the Listen method.
-	ListenFunc func() (<-chan *Message, error)
+	ListenFunc func() (<-chan Message, error)
 
 	// NameFunc mocks the Name method.
 	NameFunc func() string
@@ -127,7 +127,7 @@ func (mock *ProviderMock) DirectionCalls() []struct {
 }
 
 // Listen calls ListenFunc.
-func (mock *ProviderMock) Listen() (<-chan *Message, error) {
+func (mock *ProviderMock) Listen() (<-chan Message, error) {
 	if mock.ListenFunc == nil {
 		panic("moq: ProviderMock.ListenFunc is nil but Provider.Listen was just called")
 	}

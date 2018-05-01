@@ -33,7 +33,7 @@ func (l *LoggerImpl) ServerNoPipesConfigured(p providers.Provider) {
 
 // ServerNewMessageReceivedStart logs that a new message has been received, user should call the returned function
 // Stop to ensure timing data is submitted to the logs i.e: defer p.logger.ServerStartNewMessageReceived(p, m).Stop()
-func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m *providers.Message) *LoggerTiming {
+func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m providers.Message) *LoggerTiming {
 	l.logger.Info(
 		"Recieved message",
 		"action", "server_new_message_received",
@@ -62,7 +62,7 @@ func (l *LoggerImpl) ServerNewMessageReceivedStart(pi *pipe.Pipe, m *providers.M
 }
 
 // ServerHandleMessageExpired logs that a message has expired and will not be handled
-func (l *LoggerImpl) ServerHandleMessageExpired(pi *pipe.Pipe, m *providers.Message) {
+func (l *LoggerImpl) ServerHandleMessageExpired(pi *pipe.Pipe, m providers.Message) {
 	l.logger.Info(
 		"Message expired",
 		"action", "server_handle_message_expired",
@@ -74,7 +74,7 @@ func (l *LoggerImpl) ServerHandleMessageExpired(pi *pipe.Pipe, m *providers.Mess
 }
 
 // ServerActionPublish logs that a message has been published for a defined action
-func (l *LoggerImpl) ServerActionPublish(pi *pipe.Pipe, m *providers.Message) {
+func (l *LoggerImpl) ServerActionPublish(pi *pipe.Pipe, m providers.Message) {
 	l.logger.Info(
 		"Publish message action",
 		"action", "server_action_publish",
@@ -85,7 +85,7 @@ func (l *LoggerImpl) ServerActionPublish(pi *pipe.Pipe, m *providers.Message) {
 }
 
 // ServerActionPublishFailed logs that publishing a message to an action has failed
-func (l *LoggerImpl) ServerActionPublishFailed(pi *pipe.Pipe, m *providers.Message, err error) {
+func (l *LoggerImpl) ServerActionPublishFailed(pi *pipe.Pipe, m providers.Message, err error) {
 	l.logger.Error(
 		"Publish message action failed",
 		"action", "server_action_publish_failed",
@@ -97,7 +97,7 @@ func (l *LoggerImpl) ServerActionPublishFailed(pi *pipe.Pipe, m *providers.Messa
 }
 
 // ServerActionPublishSuccess logs that publishing a message was succcessful
-func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m *providers.Message) {
+func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m providers.Message) {
 	l.logger.Info(
 		"Publish message action succeded",
 		"action", "server_action_publish_success",
@@ -114,7 +114,7 @@ func (l *LoggerImpl) ServerActionPublishSuccess(pi *pipe.Pipe, m *providers.Mess
 }
 
 // ServerSuccessPublish logs that a success message will be published
-func (l *LoggerImpl) ServerSuccessPublish(pi *pipe.Pipe, a *pipe.Action, m *providers.Message) {
+func (l *LoggerImpl) ServerSuccessPublish(pi *pipe.Pipe, a *pipe.Action, m providers.Message) {
 	l.logger.Info(
 		"Attempt process success action",
 		"action", "server_success_publish",
@@ -131,7 +131,7 @@ func (l *LoggerImpl) ServerSuccessPublish(pi *pipe.Pipe, a *pipe.Action, m *prov
 }
 
 // ServerSuccessPublishFailed logs that the publishing of a success message has failed
-func (l *LoggerImpl) ServerSuccessPublishFailed(pi *pipe.Pipe, a *pipe.Action, m *providers.Message, err error) {
+func (l *LoggerImpl) ServerSuccessPublishFailed(pi *pipe.Pipe, a *pipe.Action, m providers.Message, err error) {
 	l.logger.Error(
 		"Publish success action failed",
 		"action", "server_success_publish_failed",
@@ -144,7 +144,7 @@ func (l *LoggerImpl) ServerSuccessPublishFailed(pi *pipe.Pipe, a *pipe.Action, m
 }
 
 // ServerSuccessPublishSuccess logs that the publishing of the success message has returned without error
-func (l *LoggerImpl) ServerSuccessPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m *providers.Message) {
+func (l *LoggerImpl) ServerSuccessPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m providers.Message) {
 	l.logger.Info(
 		"Publish success action succeded",
 		"action", "server_success_publish_success",
@@ -155,7 +155,7 @@ func (l *LoggerImpl) ServerSuccessPublishSuccess(pi *pipe.Pipe, a *pipe.Action, 
 }
 
 // ServerFailPublish logs that a success message will be published
-func (l *LoggerImpl) ServerFailPublish(pi *pipe.Pipe, a *pipe.Action, m *providers.Message) {
+func (l *LoggerImpl) ServerFailPublish(pi *pipe.Pipe, a *pipe.Action, m providers.Message) {
 	l.logger.Info(
 		"Attempt process fail action",
 		"action", "server_fail_publish",
@@ -166,7 +166,7 @@ func (l *LoggerImpl) ServerFailPublish(pi *pipe.Pipe, a *pipe.Action, m *provide
 }
 
 // ServerFailPublishFailed logs that the publishing of a success message has failed
-func (l *LoggerImpl) ServerFailPublishFailed(pi *pipe.Pipe, a *pipe.Action, m *providers.Message, err error) {
+func (l *LoggerImpl) ServerFailPublishFailed(pi *pipe.Pipe, a *pipe.Action, m providers.Message, err error) {
 	l.logger.Error(
 		"Publish fail action failed",
 		"action", "server_fail_publish_fail",
@@ -179,7 +179,7 @@ func (l *LoggerImpl) ServerFailPublishFailed(pi *pipe.Pipe, a *pipe.Action, m *p
 }
 
 // ServerFailPublishSuccess logs that the publishing of the success message has returned without error
-func (l *LoggerImpl) ServerFailPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m *providers.Message) {
+func (l *LoggerImpl) ServerFailPublishSuccess(pi *pipe.Pipe, a *pipe.Action, m providers.Message) {
 	l.logger.Info(
 		"Publish fail action succeded",
 		"action", "server_fail_publish_success",
@@ -197,13 +197,6 @@ func (l *LoggerImpl) ServerTemplateProcessStart(a *pipe.Action, data []byte) *Lo
 		"action", "server_template_process_start",
 		"output", a.Output,
 		"template", a.Template,
-	)
-	l.logger.Debug(
-		"Transform output template",
-		"action", "server_template_process_start",
-		"output", a.Output,
-		"template", a.Template,
-		"data", pretty.Sprint(data),
 	)
 
 	// time the length of the message handling
@@ -224,6 +217,7 @@ func (l *LoggerImpl) ServerTemplateProcessFail(a *pipe.Action, data []byte, err 
 		"output", a.Output,
 		"error", err,
 		"template", a.Template,
+		"data", pretty.Sprint(data),
 	)
 	l.stats.Incr("handler.message.template.failed", []string{"output:" + a.Output}, 1)
 }

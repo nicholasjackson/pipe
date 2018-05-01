@@ -21,36 +21,36 @@ func testGetLogger() *logger.LoggerMock {
 		},
 		ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message, in3 ...interface{}) {
+		ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 providers.Message, in3 ...interface{}) {
 		},
 		ProviderSubcriptionCreatedFunc: func(in1 providers.Provider) {
 		},
 		ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error) {
 		},
-		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 *providers.Message, in3 error) {
+		ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 providers.Message, in3 error) {
 		},
-		ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+		ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 		},
-		ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 *providers.Message) {
+		ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 providers.Message) {
 		},
-		ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 *providers.Message) *logger.LoggerTiming {
+		ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 providers.Message) *logger.LoggerTiming {
 			return &logger.LoggerTiming{}
 		},
 		ServerNoPipesConfiguredFunc: func(in1 providers.Provider) {
 		},
-		ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
-		ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+		ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 		},
-		ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+		ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 		},
 		ServerTemplateProcessFailFunc: func(in1 *pipe.Action, in2 []byte, in3 error) {
 		},

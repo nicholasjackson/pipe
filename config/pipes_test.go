@@ -11,7 +11,7 @@ import (
 
 func buildConfig() (*Config, *providers.ProviderMock) {
 	providerMock := &providers.ProviderMock{
-		ListenFunc: func() (<-chan *providers.Message, error) {
+		ListenFunc: func() (<-chan providers.Message, error) {
 			panic("TODO: mock out the Listen method")
 		},
 		SetupFunc: func() error {

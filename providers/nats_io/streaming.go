@@ -22,7 +22,7 @@ type StreamingProvider struct {
 	subscription stan.Subscription
 	log          logger.Logger
 	pool         ConnectionPool
-	msgChannel   chan *providers.Message
+	msgChannel   chan providers.Message
 }
 
 func NewStreamingProvider(
@@ -62,7 +62,7 @@ func (sp *StreamingProvider) Setup() error {
 	return nil
 }
 
-func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
+func (sp *StreamingProvider) Listen() (<-chan providers.Message, error) {
 	// only listen if this is an input provider
 	if sp.direction == providers.DirectionOutput {
 		return nil, nil
@@ -78,7 +78,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 	sp.log.ProviderSubcriptionCreated(sp)
 	sp.subscription = subscription
 
-	sp.msgChannel = make(chan *providers.Message)
+	sp.msgChannel = make(chan providers.Message)
 
 	return sp.msgChannel, nil
 }
@@ -86,7 +86,7 @@ func (sp *StreamingProvider) Listen() (<-chan *providers.Message, error) {
 // Publish a message to the configured outbound queue
 func (sp *StreamingProvider) Publish(msg providers.Message) (providers.Message, error) {
 	args := []interface{}{"queue", sp.Queue}
-	sp.log.ProviderMessagePublished(sp, &msg, args...)
+	sp.log.ProviderMessagePublished(sp, msg, args...)
 
 	return providers.Message{}, sp.connection.Publish(sp.Queue, msg.Data)
 }
@@ -106,5 +106,5 @@ func (sp *StreamingProvider) messageHandler(msg *stan.Msg) {
 	m.Timestamp = msg.Timestamp
 	m.Sequence = msg.Sequence
 
-	sp.msgChannel <- &m
+	sp.msgChannel <- m
 }

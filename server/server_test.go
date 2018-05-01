@@ -16,7 +16,7 @@ func setup(t *testing.T) (*is.I, *serverTest) {
 	is := is.New(t)
 
 	testElements := &serverTest{
-		inputChan: make(chan *providers.Message),
+		inputChan: make(chan providers.Message),
 	}
 	m := createMocks(testElements)
 
@@ -92,7 +92,7 @@ func TestListenCallsActionWhenMessageReceived(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{Timestamp: time.Now().UnixNano()}
+	te.inputChan <- providers.Message{Timestamp: time.Now().UnixNano()}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
@@ -108,7 +108,7 @@ func TestListenSetsParentIDForActionMessages(t *testing.T) {
 	m.Timestamp = time.Now().UnixNano()
 	m.Data = []byte(`{ "name": "nic" }`)
 
-	te.inputChan <- &m
+	te.inputChan <- m
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
@@ -121,7 +121,9 @@ func TestListenIgnoresExpiredMessage(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{Timestamp: int64(time.Now().Nanosecond()) - (10 * time.Hour).Nanoseconds()}
+	te.inputChan <- providers.Message{
+		Timestamp: int64(time.Now().Nanosecond()) - (10 * time.Hour).Nanoseconds(),
+	}
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
@@ -134,7 +136,7 @@ func TestListenCallsActionTransformingMessage(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -159,7 +161,7 @@ func TestListenPublishesSuccessEventPostAction(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -171,11 +173,14 @@ func TestListenPublishesSuccessEventPostAction(t *testing.T) {
 
 func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
 	is, te := setup(t)
-	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
+	te.config.Pipes["test_pipe"].OnSuccess = append(
+		te.config.Pipes["test_pipe"].OnSuccess,
+		te.config.Pipes["test_pipe"].OnSuccess[0],
+	)
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -185,24 +190,23 @@ func TestListenPublishesMultipleSuccessEventsPostAction(t *testing.T) {
 	is.Equal(2, len(output.PublishCalls())) // expected 1 call to function
 }
 
-/*
 func TestListenSetsParentIDForSuccessMessages(t *testing.T) {
 	is, te := setup(t)
-	te.config.Pipes["test_pipe"].OnSuccess = append(te.config.Pipes["test_pipe"].OnSuccess, te.config.Pipes["test_pipe"].OnSuccess[0])
+	outputMessage := providers.NewMessage()
+	output := te.config.Outputs["mock_output"].(*providers.ProviderMock)
+	output.PublishFunc = func(in providers.Message) (providers.Message, error) {
+		return outputMessage, nil
+	}
+	success := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
 
 	te.pipeServer.Listen()
-
-	m := providers.NewMessage()
-	m.Timestamp = time.Now().UnixNano()
-	m.Data = []byte(`{ "name": "nic" }`)
-
-	te.inputChan <- &m
+	te.inputChan <- providers.NewMessage()
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
-	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)
-	is.Equal(m.ID, output.PublishCalls()[0].In1.ParentID) // should set the parent id when sending success
+	is.Equal(1, len(success.PublishCalls()))                           // should have called publish on the success action
+	is.Equal(outputMessage.ID, success.PublishCalls()[0].In1.ParentID) // should set the parent id when sending success
 }
-*/
+
 func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 	is, te := setup(t)
 	te.config.Pipes["test_pipe"].OnSuccess[0].Template = `{ "nicsname": "{{ .JSON.name }}" }`
@@ -218,7 +222,7 @@ func TestListenTransformsSuccessEventPostAction(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -236,7 +240,7 @@ func TestListenPublishesFailEventPostAction(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -256,7 +260,7 @@ func TestListenPublishesMultipleFailEventsPostAction(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -275,7 +279,7 @@ func TestListenTransformsFailEventPostAction(t *testing.T) {
 
 	te.pipeServer.Listen()
 
-	te.inputChan <- &providers.Message{
+	te.inputChan <- providers.Message{
 		Timestamp: time.Now().UnixNano(),
 		Data:      []byte(`{ "name": "nic" }`),
 	}
@@ -299,7 +303,7 @@ func TestListenSetsParentIDForFailMessages(t *testing.T) {
 	m.Timestamp = time.Now().UnixNano()
 	m.Data = []byte(`{ "name": "nic" }`)
 
-	te.inputChan <- &m
+	te.inputChan <- m
 	time.Sleep(20 * time.Millisecond) // wait for message to be recieved
 
 	output := te.config.Outputs["mock_success_fail"].(*providers.ProviderMock)

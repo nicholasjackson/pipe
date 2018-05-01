@@ -11,17 +11,17 @@ import (
 type ServerLogger interface {
 	ServerUnableToListen(providers.Provider, error)
 	ServerNoPipesConfigured(providers.Provider)
-	ServerNewMessageReceivedStart(*pipe.Pipe, *providers.Message) *LoggerTiming
-	ServerHandleMessageExpired(*pipe.Pipe, *providers.Message)
-	ServerActionPublish(*pipe.Pipe, *providers.Message)
-	ServerActionPublishFailed(*pipe.Pipe, *providers.Message, error)
-	ServerActionPublishSuccess(*pipe.Pipe, *providers.Message)
-	ServerSuccessPublish(*pipe.Pipe, *pipe.Action, *providers.Message)
-	ServerSuccessPublishFailed(*pipe.Pipe, *pipe.Action, *providers.Message, error)
-	ServerSuccessPublishSuccess(*pipe.Pipe, *pipe.Action, *providers.Message)
-	ServerFailPublish(*pipe.Pipe, *pipe.Action, *providers.Message)
-	ServerFailPublishFailed(*pipe.Pipe, *pipe.Action, *providers.Message, error)
-	ServerFailPublishSuccess(*pipe.Pipe, *pipe.Action, *providers.Message)
+	ServerNewMessageReceivedStart(*pipe.Pipe, providers.Message) *LoggerTiming
+	ServerHandleMessageExpired(*pipe.Pipe, providers.Message)
+	ServerActionPublish(*pipe.Pipe, providers.Message)
+	ServerActionPublishFailed(*pipe.Pipe, providers.Message, error)
+	ServerActionPublishSuccess(*pipe.Pipe, providers.Message)
+	ServerSuccessPublish(*pipe.Pipe, *pipe.Action, providers.Message)
+	ServerSuccessPublishFailed(*pipe.Pipe, *pipe.Action, providers.Message, error)
+	ServerSuccessPublishSuccess(*pipe.Pipe, *pipe.Action, providers.Message)
+	ServerFailPublish(*pipe.Pipe, *pipe.Action, providers.Message)
+	ServerFailPublishFailed(*pipe.Pipe, *pipe.Action, providers.Message, error)
+	ServerFailPublishSuccess(*pipe.Pipe, *pipe.Action, providers.Message)
 
 	ServerTemplateProcessStart(*pipe.Action, []byte) *LoggerTiming
 	ServerTemplateProcessFail(*pipe.Action, []byte, error)
@@ -34,7 +34,7 @@ type ProviderLogger interface {
 	ProviderConnectionCreated(providers.Provider)
 	ProviderSubcriptionFailed(providers.Provider, error)
 	ProviderSubcriptionCreated(providers.Provider)
-	ProviderMessagePublished(providers.Provider, *providers.Message, ...interface{})
+	ProviderMessagePublished(providers.Provider, providers.Message, ...interface{})
 }
 
 //go:generate moq -out mock_logger.go . Logger

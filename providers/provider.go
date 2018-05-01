@@ -17,7 +17,7 @@ type Provider interface {
 	Type() string                     // Type returns the type of the provider
 	Direction() string                // Direction returns input or output
 	Setup() error                     // Setup to initalize any connection for the provider
-	Listen() (<-chan *Message, error) // Listen for messages
+	Listen() (<-chan Message, error)  // Listen for messages
 	Publish(Message) (Message, error) // Publish a message to the outbound provider
 	Stop() error                      // Stop listening for messages
 }

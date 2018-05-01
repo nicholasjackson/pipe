@@ -55,7 +55,7 @@ var (
 //             ProviderConnectionFailedFunc: func(in1 providers.Provider, in2 error)  {
 // 	               panic("TODO: mock out the ProviderConnectionFailed method")
 //             },
-//             ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 *providers.Message, in3 ...interface{})  {
+//             ProviderMessagePublishedFunc: func(in1 providers.Provider, in2 providers.Message, in3 ...interface{})  {
 // 	               panic("TODO: mock out the ProviderMessagePublished method")
 //             },
 //             ProviderSubcriptionCreatedFunc: func(in1 providers.Provider)  {
@@ -64,40 +64,40 @@ var (
 //             ProviderSubcriptionFailedFunc: func(in1 providers.Provider, in2 error)  {
 // 	               panic("TODO: mock out the ProviderSubcriptionFailed method")
 //             },
-//             ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 *providers.Message)  {
+//             ServerActionPublishFunc: func(in1 *pipe.Pipe, in2 providers.Message)  {
 // 	               panic("TODO: mock out the ServerActionPublish method")
 //             },
-//             ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 *providers.Message, in3 error)  {
+//             ServerActionPublishFailedFunc: func(in1 *pipe.Pipe, in2 providers.Message, in3 error)  {
 // 	               panic("TODO: mock out the ServerActionPublishFailed method")
 //             },
-//             ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *providers.Message)  {
+//             ServerActionPublishSuccessFunc: func(in1 *pipe.Pipe, in2 providers.Message)  {
 // 	               panic("TODO: mock out the ServerActionPublishSuccess method")
 //             },
-//             ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)  {
+//             ServerFailPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)  {
 // 	               panic("TODO: mock out the ServerFailPublish method")
 //             },
-//             ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error)  {
+//             ServerFailPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error)  {
 // 	               panic("TODO: mock out the ServerFailPublishFailed method")
 //             },
-//             ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)  {
+//             ServerFailPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)  {
 // 	               panic("TODO: mock out the ServerFailPublishSuccess method")
 //             },
-//             ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 *providers.Message)  {
+//             ServerHandleMessageExpiredFunc: func(in1 *pipe.Pipe, in2 providers.Message)  {
 // 	               panic("TODO: mock out the ServerHandleMessageExpired method")
 //             },
-//             ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 *providers.Message) *LoggerTiming {
+//             ServerNewMessageReceivedStartFunc: func(in1 *pipe.Pipe, in2 providers.Message) *LoggerTiming {
 // 	               panic("TODO: mock out the ServerNewMessageReceivedStart method")
 //             },
 //             ServerNoPipesConfiguredFunc: func(in1 providers.Provider)  {
 // 	               panic("TODO: mock out the ServerNoPipesConfigured method")
 //             },
-//             ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)  {
+//             ServerSuccessPublishFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)  {
 // 	               panic("TODO: mock out the ServerSuccessPublish method")
 //             },
-//             ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error)  {
+//             ServerSuccessPublishFailedFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error)  {
 // 	               panic("TODO: mock out the ServerSuccessPublishFailed method")
 //             },
-//             ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)  {
+//             ServerSuccessPublishSuccessFunc: func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)  {
 // 	               panic("TODO: mock out the ServerSuccessPublishSuccess method")
 //             },
 //             ServerTemplateProcessFailFunc: func(in1 *pipe.Action, in2 []byte, in3 error)  {
@@ -132,7 +132,7 @@ type LoggerMock struct {
 	ProviderConnectionFailedFunc func(in1 providers.Provider, in2 error)
 
 	// ProviderMessagePublishedFunc mocks the ProviderMessagePublished method.
-	ProviderMessagePublishedFunc func(in1 providers.Provider, in2 *providers.Message, in3 ...interface{})
+	ProviderMessagePublishedFunc func(in1 providers.Provider, in2 providers.Message, in3 ...interface{})
 
 	// ProviderSubcriptionCreatedFunc mocks the ProviderSubcriptionCreated method.
 	ProviderSubcriptionCreatedFunc func(in1 providers.Provider)
@@ -141,40 +141,40 @@ type LoggerMock struct {
 	ProviderSubcriptionFailedFunc func(in1 providers.Provider, in2 error)
 
 	// ServerActionPublishFunc mocks the ServerActionPublish method.
-	ServerActionPublishFunc func(in1 *pipe.Pipe, in2 *providers.Message)
+	ServerActionPublishFunc func(in1 *pipe.Pipe, in2 providers.Message)
 
 	// ServerActionPublishFailedFunc mocks the ServerActionPublishFailed method.
-	ServerActionPublishFailedFunc func(in1 *pipe.Pipe, in2 *providers.Message, in3 error)
+	ServerActionPublishFailedFunc func(in1 *pipe.Pipe, in2 providers.Message, in3 error)
 
 	// ServerActionPublishSuccessFunc mocks the ServerActionPublishSuccess method.
-	ServerActionPublishSuccessFunc func(in1 *pipe.Pipe, in2 *providers.Message)
+	ServerActionPublishSuccessFunc func(in1 *pipe.Pipe, in2 providers.Message)
 
 	// ServerFailPublishFunc mocks the ServerFailPublish method.
-	ServerFailPublishFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)
+	ServerFailPublishFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)
 
 	// ServerFailPublishFailedFunc mocks the ServerFailPublishFailed method.
-	ServerFailPublishFailedFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error)
+	ServerFailPublishFailedFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error)
 
 	// ServerFailPublishSuccessFunc mocks the ServerFailPublishSuccess method.
-	ServerFailPublishSuccessFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)
+	ServerFailPublishSuccessFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)
 
 	// ServerHandleMessageExpiredFunc mocks the ServerHandleMessageExpired method.
-	ServerHandleMessageExpiredFunc func(in1 *pipe.Pipe, in2 *providers.Message)
+	ServerHandleMessageExpiredFunc func(in1 *pipe.Pipe, in2 providers.Message)
 
 	// ServerNewMessageReceivedStartFunc mocks the ServerNewMessageReceivedStart method.
-	ServerNewMessageReceivedStartFunc func(in1 *pipe.Pipe, in2 *providers.Message) *LoggerTiming
+	ServerNewMessageReceivedStartFunc func(in1 *pipe.Pipe, in2 providers.Message) *LoggerTiming
 
 	// ServerNoPipesConfiguredFunc mocks the ServerNoPipesConfigured method.
 	ServerNoPipesConfiguredFunc func(in1 providers.Provider)
 
 	// ServerSuccessPublishFunc mocks the ServerSuccessPublish method.
-	ServerSuccessPublishFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)
+	ServerSuccessPublishFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)
 
 	// ServerSuccessPublishFailedFunc mocks the ServerSuccessPublishFailed method.
-	ServerSuccessPublishFailedFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error)
+	ServerSuccessPublishFailedFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error)
 
 	// ServerSuccessPublishSuccessFunc mocks the ServerSuccessPublishSuccess method.
-	ServerSuccessPublishSuccessFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message)
+	ServerSuccessPublishSuccessFunc func(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message)
 
 	// ServerTemplateProcessFailFunc mocks the ServerTemplateProcessFail method.
 	ServerTemplateProcessFailFunc func(in1 *pipe.Action, in2 []byte, in3 error)
@@ -213,7 +213,7 @@ type LoggerMock struct {
 			// In1 is the in1 argument value.
 			In1 providers.Provider
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 			// In3 is the in3 argument value.
 			In3 []interface{}
 		}
@@ -234,14 +234,14 @@ type LoggerMock struct {
 			// In1 is the in1 argument value.
 			In1 *pipe.Pipe
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 		}
 		// ServerActionPublishFailed holds details about calls to the ServerActionPublishFailed method.
 		ServerActionPublishFailed []struct {
 			// In1 is the in1 argument value.
 			In1 *pipe.Pipe
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 			// In3 is the in3 argument value.
 			In3 error
 		}
@@ -250,7 +250,7 @@ type LoggerMock struct {
 			// In1 is the in1 argument value.
 			In1 *pipe.Pipe
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 		}
 		// ServerFailPublish holds details about calls to the ServerFailPublish method.
 		ServerFailPublish []struct {
@@ -259,7 +259,7 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 		}
 		// ServerFailPublishFailed holds details about calls to the ServerFailPublishFailed method.
 		ServerFailPublishFailed []struct {
@@ -268,7 +268,7 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 			// In4 is the in4 argument value.
 			In4 error
 		}
@@ -279,21 +279,21 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 		}
 		// ServerHandleMessageExpired holds details about calls to the ServerHandleMessageExpired method.
 		ServerHandleMessageExpired []struct {
 			// In1 is the in1 argument value.
 			In1 *pipe.Pipe
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 		}
 		// ServerNewMessageReceivedStart holds details about calls to the ServerNewMessageReceivedStart method.
 		ServerNewMessageReceivedStart []struct {
 			// In1 is the in1 argument value.
 			In1 *pipe.Pipe
 			// In2 is the in2 argument value.
-			In2 *providers.Message
+			In2 providers.Message
 		}
 		// ServerNoPipesConfigured holds details about calls to the ServerNoPipesConfigured method.
 		ServerNoPipesConfigured []struct {
@@ -307,7 +307,7 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 		}
 		// ServerSuccessPublishFailed holds details about calls to the ServerSuccessPublishFailed method.
 		ServerSuccessPublishFailed []struct {
@@ -316,7 +316,7 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 			// In4 is the in4 argument value.
 			In4 error
 		}
@@ -327,7 +327,7 @@ type LoggerMock struct {
 			// In2 is the in2 argument value.
 			In2 *pipe.Action
 			// In3 is the in3 argument value.
-			In3 *providers.Message
+			In3 providers.Message
 		}
 		// ServerTemplateProcessFail holds details about calls to the ServerTemplateProcessFail method.
 		ServerTemplateProcessFail []struct {
@@ -481,13 +481,13 @@ func (mock *LoggerMock) ProviderConnectionFailedCalls() []struct {
 }
 
 // ProviderMessagePublished calls ProviderMessagePublishedFunc.
-func (mock *LoggerMock) ProviderMessagePublished(in1 providers.Provider, in2 *providers.Message, in3 ...interface{}) {
+func (mock *LoggerMock) ProviderMessagePublished(in1 providers.Provider, in2 providers.Message, in3 ...interface{}) {
 	if mock.ProviderMessagePublishedFunc == nil {
 		panic("moq: LoggerMock.ProviderMessagePublishedFunc is nil but Logger.ProviderMessagePublished was just called")
 	}
 	callInfo := struct {
 		In1 providers.Provider
-		In2 *providers.Message
+		In2 providers.Message
 		In3 []interface{}
 	}{
 		In1: in1,
@@ -505,12 +505,12 @@ func (mock *LoggerMock) ProviderMessagePublished(in1 providers.Provider, in2 *pr
 //     len(mockedLogger.ProviderMessagePublishedCalls())
 func (mock *LoggerMock) ProviderMessagePublishedCalls() []struct {
 	In1 providers.Provider
-	In2 *providers.Message
+	In2 providers.Message
 	In3 []interface{}
 } {
 	var calls []struct {
 		In1 providers.Provider
-		In2 *providers.Message
+		In2 providers.Message
 		In3 []interface{}
 	}
 	lockLoggerMockProviderMessagePublished.RLock()
@@ -586,13 +586,13 @@ func (mock *LoggerMock) ProviderSubcriptionFailedCalls() []struct {
 }
 
 // ServerActionPublish calls ServerActionPublishFunc.
-func (mock *LoggerMock) ServerActionPublish(in1 *pipe.Pipe, in2 *providers.Message) {
+func (mock *LoggerMock) ServerActionPublish(in1 *pipe.Pipe, in2 providers.Message) {
 	if mock.ServerActionPublishFunc == nil {
 		panic("moq: LoggerMock.ServerActionPublishFunc is nil but Logger.ServerActionPublish was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -608,11 +608,11 @@ func (mock *LoggerMock) ServerActionPublish(in1 *pipe.Pipe, in2 *providers.Messa
 //     len(mockedLogger.ServerActionPublishCalls())
 func (mock *LoggerMock) ServerActionPublishCalls() []struct {
 	In1 *pipe.Pipe
-	In2 *providers.Message
+	In2 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}
 	lockLoggerMockServerActionPublish.RLock()
 	calls = mock.calls.ServerActionPublish
@@ -621,13 +621,13 @@ func (mock *LoggerMock) ServerActionPublishCalls() []struct {
 }
 
 // ServerActionPublishFailed calls ServerActionPublishFailedFunc.
-func (mock *LoggerMock) ServerActionPublishFailed(in1 *pipe.Pipe, in2 *providers.Message, in3 error) {
+func (mock *LoggerMock) ServerActionPublishFailed(in1 *pipe.Pipe, in2 providers.Message, in3 error) {
 	if mock.ServerActionPublishFailedFunc == nil {
 		panic("moq: LoggerMock.ServerActionPublishFailedFunc is nil but Logger.ServerActionPublishFailed was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 		In3 error
 	}{
 		In1: in1,
@@ -645,12 +645,12 @@ func (mock *LoggerMock) ServerActionPublishFailed(in1 *pipe.Pipe, in2 *providers
 //     len(mockedLogger.ServerActionPublishFailedCalls())
 func (mock *LoggerMock) ServerActionPublishFailedCalls() []struct {
 	In1 *pipe.Pipe
-	In2 *providers.Message
+	In2 providers.Message
 	In3 error
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 		In3 error
 	}
 	lockLoggerMockServerActionPublishFailed.RLock()
@@ -660,13 +660,13 @@ func (mock *LoggerMock) ServerActionPublishFailedCalls() []struct {
 }
 
 // ServerActionPublishSuccess calls ServerActionPublishSuccessFunc.
-func (mock *LoggerMock) ServerActionPublishSuccess(in1 *pipe.Pipe, in2 *providers.Message) {
+func (mock *LoggerMock) ServerActionPublishSuccess(in1 *pipe.Pipe, in2 providers.Message) {
 	if mock.ServerActionPublishSuccessFunc == nil {
 		panic("moq: LoggerMock.ServerActionPublishSuccessFunc is nil but Logger.ServerActionPublishSuccess was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -682,11 +682,11 @@ func (mock *LoggerMock) ServerActionPublishSuccess(in1 *pipe.Pipe, in2 *provider
 //     len(mockedLogger.ServerActionPublishSuccessCalls())
 func (mock *LoggerMock) ServerActionPublishSuccessCalls() []struct {
 	In1 *pipe.Pipe
-	In2 *providers.Message
+	In2 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}
 	lockLoggerMockServerActionPublishSuccess.RLock()
 	calls = mock.calls.ServerActionPublishSuccess
@@ -695,14 +695,14 @@ func (mock *LoggerMock) ServerActionPublishSuccessCalls() []struct {
 }
 
 // ServerFailPublish calls ServerFailPublishFunc.
-func (mock *LoggerMock) ServerFailPublish(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+func (mock *LoggerMock) ServerFailPublish(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 	if mock.ServerFailPublishFunc == nil {
 		panic("moq: LoggerMock.ServerFailPublishFunc is nil but Logger.ServerFailPublish was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -720,12 +720,12 @@ func (mock *LoggerMock) ServerFailPublish(in1 *pipe.Pipe, in2 *pipe.Action, in3 
 func (mock *LoggerMock) ServerFailPublishCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}
 	lockLoggerMockServerFailPublish.RLock()
 	calls = mock.calls.ServerFailPublish
@@ -734,14 +734,14 @@ func (mock *LoggerMock) ServerFailPublishCalls() []struct {
 }
 
 // ServerFailPublishFailed calls ServerFailPublishFailedFunc.
-func (mock *LoggerMock) ServerFailPublishFailed(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+func (mock *LoggerMock) ServerFailPublishFailed(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 	if mock.ServerFailPublishFailedFunc == nil {
 		panic("moq: LoggerMock.ServerFailPublishFailedFunc is nil but Logger.ServerFailPublishFailed was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 		In4 error
 	}{
 		In1: in1,
@@ -761,13 +761,13 @@ func (mock *LoggerMock) ServerFailPublishFailed(in1 *pipe.Pipe, in2 *pipe.Action
 func (mock *LoggerMock) ServerFailPublishFailedCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 	In4 error
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 		In4 error
 	}
 	lockLoggerMockServerFailPublishFailed.RLock()
@@ -777,14 +777,14 @@ func (mock *LoggerMock) ServerFailPublishFailedCalls() []struct {
 }
 
 // ServerFailPublishSuccess calls ServerFailPublishSuccessFunc.
-func (mock *LoggerMock) ServerFailPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+func (mock *LoggerMock) ServerFailPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 	if mock.ServerFailPublishSuccessFunc == nil {
 		panic("moq: LoggerMock.ServerFailPublishSuccessFunc is nil but Logger.ServerFailPublishSuccess was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -802,12 +802,12 @@ func (mock *LoggerMock) ServerFailPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Actio
 func (mock *LoggerMock) ServerFailPublishSuccessCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}
 	lockLoggerMockServerFailPublishSuccess.RLock()
 	calls = mock.calls.ServerFailPublishSuccess
@@ -816,13 +816,13 @@ func (mock *LoggerMock) ServerFailPublishSuccessCalls() []struct {
 }
 
 // ServerHandleMessageExpired calls ServerHandleMessageExpiredFunc.
-func (mock *LoggerMock) ServerHandleMessageExpired(in1 *pipe.Pipe, in2 *providers.Message) {
+func (mock *LoggerMock) ServerHandleMessageExpired(in1 *pipe.Pipe, in2 providers.Message) {
 	if mock.ServerHandleMessageExpiredFunc == nil {
 		panic("moq: LoggerMock.ServerHandleMessageExpiredFunc is nil but Logger.ServerHandleMessageExpired was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -838,11 +838,11 @@ func (mock *LoggerMock) ServerHandleMessageExpired(in1 *pipe.Pipe, in2 *provider
 //     len(mockedLogger.ServerHandleMessageExpiredCalls())
 func (mock *LoggerMock) ServerHandleMessageExpiredCalls() []struct {
 	In1 *pipe.Pipe
-	In2 *providers.Message
+	In2 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}
 	lockLoggerMockServerHandleMessageExpired.RLock()
 	calls = mock.calls.ServerHandleMessageExpired
@@ -851,13 +851,13 @@ func (mock *LoggerMock) ServerHandleMessageExpiredCalls() []struct {
 }
 
 // ServerNewMessageReceivedStart calls ServerNewMessageReceivedStartFunc.
-func (mock *LoggerMock) ServerNewMessageReceivedStart(in1 *pipe.Pipe, in2 *providers.Message) *LoggerTiming {
+func (mock *LoggerMock) ServerNewMessageReceivedStart(in1 *pipe.Pipe, in2 providers.Message) *LoggerTiming {
 	if mock.ServerNewMessageReceivedStartFunc == nil {
 		panic("moq: LoggerMock.ServerNewMessageReceivedStartFunc is nil but Logger.ServerNewMessageReceivedStart was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -873,11 +873,11 @@ func (mock *LoggerMock) ServerNewMessageReceivedStart(in1 *pipe.Pipe, in2 *provi
 //     len(mockedLogger.ServerNewMessageReceivedStartCalls())
 func (mock *LoggerMock) ServerNewMessageReceivedStartCalls() []struct {
 	In1 *pipe.Pipe
-	In2 *providers.Message
+	In2 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
-		In2 *providers.Message
+		In2 providers.Message
 	}
 	lockLoggerMockServerNewMessageReceivedStart.RLock()
 	calls = mock.calls.ServerNewMessageReceivedStart
@@ -917,14 +917,14 @@ func (mock *LoggerMock) ServerNoPipesConfiguredCalls() []struct {
 }
 
 // ServerSuccessPublish calls ServerSuccessPublishFunc.
-func (mock *LoggerMock) ServerSuccessPublish(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+func (mock *LoggerMock) ServerSuccessPublish(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 	if mock.ServerSuccessPublishFunc == nil {
 		panic("moq: LoggerMock.ServerSuccessPublishFunc is nil but Logger.ServerSuccessPublish was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -942,12 +942,12 @@ func (mock *LoggerMock) ServerSuccessPublish(in1 *pipe.Pipe, in2 *pipe.Action, i
 func (mock *LoggerMock) ServerSuccessPublishCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}
 	lockLoggerMockServerSuccessPublish.RLock()
 	calls = mock.calls.ServerSuccessPublish
@@ -956,14 +956,14 @@ func (mock *LoggerMock) ServerSuccessPublishCalls() []struct {
 }
 
 // ServerSuccessPublishFailed calls ServerSuccessPublishFailedFunc.
-func (mock *LoggerMock) ServerSuccessPublishFailed(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message, in4 error) {
+func (mock *LoggerMock) ServerSuccessPublishFailed(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message, in4 error) {
 	if mock.ServerSuccessPublishFailedFunc == nil {
 		panic("moq: LoggerMock.ServerSuccessPublishFailedFunc is nil but Logger.ServerSuccessPublishFailed was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 		In4 error
 	}{
 		In1: in1,
@@ -983,13 +983,13 @@ func (mock *LoggerMock) ServerSuccessPublishFailed(in1 *pipe.Pipe, in2 *pipe.Act
 func (mock *LoggerMock) ServerSuccessPublishFailedCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 	In4 error
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 		In4 error
 	}
 	lockLoggerMockServerSuccessPublishFailed.RLock()
@@ -999,14 +999,14 @@ func (mock *LoggerMock) ServerSuccessPublishFailedCalls() []struct {
 }
 
 // ServerSuccessPublishSuccess calls ServerSuccessPublishSuccessFunc.
-func (mock *LoggerMock) ServerSuccessPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Action, in3 *providers.Message) {
+func (mock *LoggerMock) ServerSuccessPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Action, in3 providers.Message) {
 	if mock.ServerSuccessPublishSuccessFunc == nil {
 		panic("moq: LoggerMock.ServerSuccessPublishSuccessFunc is nil but Logger.ServerSuccessPublishSuccess was just called")
 	}
 	callInfo := struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}{
 		In1: in1,
 		In2: in2,
@@ -1024,12 +1024,12 @@ func (mock *LoggerMock) ServerSuccessPublishSuccess(in1 *pipe.Pipe, in2 *pipe.Ac
 func (mock *LoggerMock) ServerSuccessPublishSuccessCalls() []struct {
 	In1 *pipe.Pipe
 	In2 *pipe.Action
-	In3 *providers.Message
+	In3 providers.Message
 } {
 	var calls []struct {
 		In1 *pipe.Pipe
 		In2 *pipe.Action
-		In3 *providers.Message
+		In3 providers.Message
 	}
 	lockLoggerMockServerSuccessPublishSuccess.RLock()
 	calls = mock.calls.ServerSuccessPublishSuccess

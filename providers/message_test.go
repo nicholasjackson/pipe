@@ -24,6 +24,14 @@ func TestGenerateRandomMessageID(t *testing.T) {
 	is.True(m1.ID != m2.ID) // id1 should not be equal to id2
 }
 
+func TestSetsDefaultTimeStamp(t *testing.T) {
+	is := is.New(t)
+
+	m1 := NewMessage()
+
+	is.True(m1.Timestamp > 1) // timestamp should be set
+}
+
 func TestCopyDuplicatesAMessage(t *testing.T) {
 	is := is.New(t)
 

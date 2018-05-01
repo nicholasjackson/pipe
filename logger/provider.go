@@ -25,7 +25,7 @@ func (l *LoggerImpl) ProviderSubcriptionCreated(p providers.Provider) {
 	l.logger.Info("Created subscription for", "provider", p.Name(), "type", p.Type())
 }
 
-func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m *providers.Message, args ...interface{}) {
+func (l *LoggerImpl) ProviderMessagePublished(p providers.Provider, m providers.Message, args ...interface{}) {
 	// concatonate custom args for logger
 	infoArgs := []interface{}{
 		"id", m.ID,
