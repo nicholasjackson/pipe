@@ -142,6 +142,6 @@ There is a simple test harness in ./testharness/main.go which can be used to val
 
 ## TODO
 [x] Implement monitoring and metrics with StatsD  
-[ ] Finish documentation
-[ ] Write more examples
-[ ] Finish basic provider implementation
+[ ] Finish documentation  
+[ ] Write more examples  
+[ ] Finish basic provider implementation  
